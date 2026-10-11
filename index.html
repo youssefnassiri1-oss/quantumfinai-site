@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>QuantumFinAI | الذكاء الاصطناعي والمالية</title>
+<meta name="description" content="QuantumFinAI : produits, formations et solutions d'IA pour la finance. نسخة تجريبية.">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="nav">
+  <a class="brand" href="#top"><span class="logo">Q</span> QuantumFin<b>AI</b></a>
+  <nav>
+    <a href="#produits">المنتجات</a>
+    <a href="#formations">التكوينات</a>
+    <a href="#carte">البطاقة</a>
+    <a href="#ia">حلول الذكاء الاصطناعي</a>
+    <a class="btn small" href="#inscription">إنشاء حساب</a>
+  </nav>
+</header>
+
+<main id="top">
+<section class="hero">
+  <div class="badge">نسخة تجريبية · Version démo</div>
+  <h1>مستقبل المالية <span class="grad">بالذكاء الاصطناعي</span></h1>
+  <p class="sub">Quantum computing, finance et IA réunis. منصة خفيفة وسريعة لاكتشاف منتجاتنا وتكويناتنا وحلولنا الذكية.</p>
+  <div class="cta">
+    <a class="btn big" id="dl" href="catalogue-quantumfinai.pdf" download>⬇ تحميل الكتالوج · Télécharger</a>
+    <a class="btn ghost big" href="#produits">استكشف المنتجات</a>
+  </div>
+  <p class="note" id="dlmsg" aria-live="polite">ملف PDF خفيف (أقل من 2 كيلوبايت)</p>
+</section>
+
+<section id="produits">
+  <h2>المنتجات <small>Produits</small></h2>
+  <div class="grid" id="products"></div>
+</section>
+
+<section id="formations" class="alt">
+  <h2>التكوينات <small>Formations</small></h2>
+  <div class="grid">
+    <article class="card"><span class="tag">8 ساعات</span><h3>أساسيات التحليل المالي</h3><p>Analyse financière pour débutants : القوائم المالية والنسب.</p><button class="btn small" data-toast="التسجيل في التكوين غير متاح بعد (تجريبي)">سجّل</button></article>
+    <article class="card"><span class="tag">12 ساعة</span><h3>التدقيق والمراقبة</h3><p>Audit et contrôle de gestion : منهجية عملية بأمثلة.</p><button class="btn small" data-toast="التسجيل في التكوين غير متاح بعد (تجريبي)">سجّل</button></article>
+    <article class="card"><span class="tag">10 ساعات</span><h3>الذكاء الاصطناعي للمالية</h3><p>IA appliquée à la finance : أتمتة التقارير والتنبؤ.</p><button class="btn small" data-toast="التسجيل في التكوين غير متاح بعد (تجريبي)">سجّل</button></article>
+  </div>
+</section>
+
+<section id="carte">
+  <div class="cardbox">
+    <div class="txt">
+      <h2>بطاقة QuantumFin <small>Carte</small></h2>
+      <p>فكرة بطاقة رقمية للمدفوعات الذكية. Bientôt disponible. لا توجد أي عملية دفع حقيقية في هذا الموقع.</p>
+      <button class="btn" data-toast="سنخبرك عند الإطلاق (تجريبي)">أعلمني عند الإطلاق</button>
+    </div>
+    <div class="ccard" aria-hidden="true"><div class="chip"></div><div class="num">•••• •••• •••• 0000</div><div class="row"><span>QUANTUMFINAI</span><span>DÉMO</span></div></div>
+  </div>
+</section>
+
+<section id="ia" class="alt">
+  <h2>حلول الذكاء الاصطناعي الجديدة <small>Nouvelles solutions IA</small></h2>
+  <div class="grid">
+    <article class="card"><div class="ico">🤖</div><h3>مساعد مالي ذكي</h3><p>Assistant qui répond aux questions comptables.</p></article>
+    <article class="card"><div class="ico">📊</div><h3>تحليل التقارير</h3><p>Lecture automatique des bilans et alertes de risque.</p></article>
+    <article class="card"><div class="ico">⚛️</div><h3>نماذج كمّية</h3><p>Modèles quantitatifs pour l'optimisation de portefeuille.</p></article>
+  </div>
+</section>
+
+<section id="paiements" class="alt">
+  <h2>طرق الدفع والسحب <small>Paiements et retraits</small></h2>
+  <p class="note" style="margin:-14px 0 22px">عرض توضيحي فقط : لا تتم أي معالجة حقيقية للأموال. Affichage démo, aucun paiement réel.</p>
+  <h3 class="sh">طرق الدفع · Moyens de paiement</h3>
+  <div class="pills" id="pay"></div>
+  <h3 class="sh">طرق السحب · Moyens de retrait</h3>
+  <div class="pills" id="wd"></div>
+</section>
+
+<section id="inscription">
+  <div class="formbox">
+    <h2>إنشاء حساب <small>Inscription</small></h2>
+    <form id="signup" novalidate>
+      <label>الاسم الكامل<input name="name" required autocomplete="name"></label>
+      <label>البريد الإلكتروني<input name="email" type="email" required autocomplete="email" dir="ltr"></label>
+            <button class="btn big" type="submit">إنشاء الحساب</button>
+      <p class="note" id="formmsg" aria-live="polite">بيانات المسجلين (الاسم والبريد) ملك لصاحب الموقع يوسف الناصري، ولا تُباع ولا تُشارك مع أي طرف آخر. نموذج تجريبي : لا تُطلب كلمة مرور ولا بيانات بنكية. Vos données appartiennent au propriétaire du site et ne sont jamais revendues.</p>
+    </form>
+  </div>
+</section>
+</main>
+
+<footer>© 2026 QuantumFinAI · quantumfinai.me · موقع تجريبي، المحتوى وهمي · Site démo, contenu fictif</footer>
+<div id="toast" role="status"></div>
+<script src="app.js"></script>
+</body>
+</html>
