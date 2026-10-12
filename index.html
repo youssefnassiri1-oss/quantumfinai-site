@@ -138,7 +138,7 @@
       <label>Category<select name="c"><option>surveys</option><option>apps</option><option>games</option><option>trials</option><option selected>tasks</option></select></label>
       <label>Points<input name="p" type="number" min="1" required></label><label>Minimum seconds to complete (optional)<input name="ms" type="number" min="0"></label><label>Maximum claims (optional)<input name="mc" type="number" min="0"></label><label>Status<select name="s"><option>draft</option><option selected>active</option></select></label>
       <button class="btn" type="submit">Save offer</button><p class="note" id="offmsg" aria-live="polite"></p></form>
-    <h3 class="sh">Networks</h3><div class="list" id="anets"></div>
+    <h3 class="sh">Networks</h3><div class="list" id="anets"></div><h3 class="sh">Risk threshold</h3><div class="lrow"><div>IP fraud score at or above this goes to review (default 5)</div><div class="lm"><input id="thr" type="number" min="1" max="100" value="5" style="width:80px"></div><div class="la"><button class="btn small" data-thr="1">Save</button></div></div>
     <h3 class="sh">All offers</h3><div class="list" id="aoffers"></div>
   </div>
 </section>
