@@ -3,14 +3,15 @@ const PN=["FinPulse","PayFlow","WealthAI","CreditIQ","FinSight","NeoLedger"],CN=
 document.getElementById('products').innerHTML=PN.map(n=>card('◇',n)).join('');
 document.getElementById('courses').innerHTML=CN.map(n=>card('▢',n)).join('');
 document.getElementById('solutions').innerHTML=SN.map(n=>card('◎',n)).join('');
-const PAY=["Visa","Mastercard","Bank transfer","PayPal","USDT (TRC20)"];
-const WD=["Bank transfer","PayPal","USDT (TRC20)","Payoneer"];
-const pill=n=>`<div class="pill"><i>${n.replace(/[^A-Za-z]/g,'').slice(0,3).toUpperCase()}</i>${n}</div>`;
-document.getElementById('pay').innerHTML=PAY.map(pill).join('');document.getElementById('wd').innerHTML=WD.map(pill).join('');
+const WD=["Bank transfer","Digital wallet","Gift cards","Crypto"];
+const pill=n=>`<div class="pill"><i>${n.slice(0,2).toUpperCase()}</i>${n}<small>Coming soon</small></div>`;
+document.getElementById('wd').innerHTML=WD.map(pill).join('');
+const CH=["All","Surveys","Apps","Games","Trials","Tasks"];
+document.getElementById('chips').innerHTML=CH.map((n,i)=>`<div class="pill${i?'':' on'}">${n}</div>`).join('');
+document.getElementById('offergrid').innerHTML=Array.from({length:6},()=>`<article class="card slot"><div class="thumb">+</div><span class="tag">Coming soon</span><h3>Partner company</h3><p>Offer details coming soon.</p><div class="pts">-- points</div></article>`).join('');
 const t=document.getElementById('toast');let tm;
 function toast(m){t.textContent=m;t.classList.add('on');clearTimeout(tm);tm=setTimeout(()=>t.classList.remove('on'),2600)}
 document.addEventListener('click',e=>{const b=e.target.closest('[data-toast]');if(b)toast(b.dataset.toast)});
-document.getElementById('dl').addEventListener('click',()=>{document.getElementById('dlmsg').textContent='✓ Download started';toast('Download started')});
 // Supabase Auth (REST, no library). Fill these two after the project is wired.
 const SB_URL="https://rofcjlvxzctevqjzgvyt.supabase.co",SB_KEY="sb_publishable_F4LnZ_xwqjOHEU_k9GdaEQ_uL2lctJq";
 let mode='signup';const f=document.getElementById('signup'),m=document.getElementById('formmsg');
@@ -21,7 +22,7 @@ document.getElementById('lname').style.display=mode==='signup'?'':'none';
 document.getElementById('fsubmit').textContent=mode==='signup'?'Create account':'Sign in';
 document.getElementById('ftitle').textContent=mode==='signup'?'Create an account':'Sign in';
 f.pw.autocomplete=mode==='signup'?'new-password':'current-password'}));
-function showUser(email){const w=document.getElementById('who');w.hidden=false;w.textContent='✓ Signed in as '+email;}
+function showUser(email){const w=document.getElementById('who');w.hidden=false;w.textContent='✓ Signed in as '+email;document.getElementById('balnote').textContent='Signed in as '+email+'. Your balance is 0 points. No offers are live yet.';}
 async function sb(path,body){const r=await fetch(SB_URL+path,{method:'POST',headers:{apikey:SB_KEY,'Content-Type':'application/json'},body:JSON.stringify(body)});return[r,await r.json().catch(()=>({}))]}
 f.addEventListener('submit',async e=>{e.preventDefault();
 if(!/^\S+@\S+\.\S+$/.test(f.email.value)||f.pw.value.length<8){say('Check your email and password (8 characters minimum)');return}
