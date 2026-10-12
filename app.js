@@ -11,8 +11,8 @@ document.addEventListener('click',e=>{const b=e.target.closest('[data-toast]');i
 const SB_URL="https://rofcjlvxzctevqjzgvyt.supabase.co",SB_KEY="sb_publishable_F4LnZ_xwqjOHEU_k9GdaEQ_uL2lctJq";
 let mode='signup';const f=document.getElementById('signup'),m=document.getElementById('formmsg');
 const say=(t,ok)=>{m.style.color=ok?'#86efac':'#fca5a5';m.textContent=t};
-document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>{mode=b.dataset.mode;
-document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('on',x===b));
+document.querySelectorAll('.tabs .tab').forEach(b=>b.addEventListener('click',()=>{mode=b.dataset.mode;
+document.querySelectorAll('.tabs .tab').forEach(x=>x.classList.toggle('on',x===b));
 document.getElementById('lname').style.display=mode==='signup'?'':'none';
 document.getElementById('fsubmit').textContent=mode==='signup'?'Create account':'Sign in';
 document.getElementById('ftitle').textContent=mode==='signup'?'Create an account':'Sign in';
