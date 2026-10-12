@@ -1,21 +1,38 @@
-const P=[
-["📘","دليل المحاسبة الذكية","Guide comptable intelligent","المشكلة: المبتدئون يضيعون وقتا في فهم القيود المحاسبية. الحل: دليل خطوة بخطوة مع أمثلة من المخطط المحاسبي المغربي (CGNC).","Définition : la comptabilité générale enregistre chaque opération en débit et crédit pour produire bilan et compte de résultat.","49 MAD"],
-["📈","لوحة تحليل مالي","Tableau de bord financier","المشكلة: الأرقام مبعثرة في ملفات كثيرة. الحل: لوحة واحدة تعرض السيولة والمردودية والمديونية بمؤشرات واضحة.","Définition : un tableau de bord suit des ratios clés (liquidité, rentabilité, endettement) pour décider vite.","99 MAD"],
-["🧮","قوالب إكسل للتدقيق","Modèles Excel pour l'audit","المشكلة: إعداد أوراق العمل يستهلك ساعات. الحل: قوالب جاهزة لاختبار العينات والمطابقات وتتبع الملاحظات.","Définition : l'audit financier vérifie que les comptes donnent une image fidèle de la situation de l'entreprise.","29 MAD"],
-["🔐","أداة تقييم المخاطر","Outil d'évaluation des risques","المشكلة: المخاطر لا تُقاس بشكل موحد. الحل: مصفوفة تقيّم احتمال الخطر وأثره وتصنّفه بالألوان.","Définition : le risque = probabilité x impact. La matrice aide à prioriser les contrôles.","149 MAD"],
-["⚛️","محاكي المحفظة الكمّي","Simulateur de portefeuille quantique","المشكلة: اختيار توزيع الأصول معقد عندما تكثر الاحتمالات. الحل: عرض تجريبي لفكرة الحوسبة الكمّية في تحسين المحفظة.","Définition : l'informatique quantique utilise des qubits, capables d'explorer plusieurs combinaisons à la fois.","199 MAD"],
-["🗂️","حزمة التقارير الجاهزة","Pack de rapports financiers","المشكلة: كتابة التقارير الدورية متكررة. الحل: نماذج جاهزة لتقرير شهري وفصلي مع شروحات للأرقام.","Définition : un reporting financier résume périodiquement performance, trésorerie et écarts au budget.","59 MAD"]];
-const PAY=["Visa","Mastercard","CMI","PayPal","Virement bancaire|تحويل بنكي","Cash Plus","Wafacash","USDT (TRC20)"];
-const WD=["Virement bancaire|تحويل بنكي","Cash Plus","Wafacash","PayPal","USDT (TRC20)","Payoneer"];
-const pill=n=>{const[a,b]=n.split('|');return `<div class="pill"><i>${a.slice(0,3).toUpperCase()}</i>${b?b+' · '+a:a}</div>`};
+const card=(ico,t,extra)=>`<article class="card"><div class="thumb">${ico}</div><span class="tag">Coming soon</span><h3>${t}</h3><p>Details coming soon.</p>${extra||''}</article>`;
+const PN=["FinPulse","PayFlow","WealthAI","CreditIQ","FinSight","NeoLedger"],CN=["Fintech Fundamentals","Financial Analysis Basics","AI for Finance"],SN=["Smart Financial Assistant","Report Analyzer","Credit Risk Engine"];
+document.getElementById('products').innerHTML=PN.map(n=>card('◇',n)).join('');
+document.getElementById('courses').innerHTML=CN.map(n=>card('▢',n)).join('');
+document.getElementById('solutions').innerHTML=SN.map(n=>card('◎',n)).join('');
+const PAY=["Visa","Mastercard","Bank transfer","PayPal","USDT (TRC20)"];
+const WD=["Bank transfer","PayPal","USDT (TRC20)","Payoneer"];
+const pill=n=>`<div class="pill"><i>${n.replace(/[^A-Za-z]/g,'').slice(0,3).toUpperCase()}</i>${n}</div>`;
 document.getElementById('pay').innerHTML=PAY.map(pill).join('');document.getElementById('wd').innerHTML=WD.map(pill).join('');
-document.getElementById('products').innerHTML=P.map(p=>`<article class="card"><div class="thumb">${p[0]}</div><span class="tag">تجريبي</span><h3>${p[1]}</h3><small class="def">${p[2]}</small><p>${p[3]}</p><p class="def">${p[4]}</p><div class="price">${p[5]}</div><button class="btn small" data-toast="لا يوجد دفع حقيقي : هذا عرض تجريبي">أضف إلى السلة</button></article>`).join('');
 const t=document.getElementById('toast');let tm;
 function toast(m){t.textContent=m;t.classList.add('on');clearTimeout(tm);tm=setTimeout(()=>t.classList.remove('on'),2600)}
 document.addEventListener('click',e=>{const b=e.target.closest('[data-toast]');if(b)toast(b.dataset.toast)});
-document.getElementById('dl').addEventListener('click',()=>{document.getElementById('dlmsg').textContent='✓ بدأ التحميل · Téléchargement lancé';toast('تم بدء التحميل')});
-const ENDPOINT="";// Formspree URL, ex: https://formspree.io/f/xxxxxxxx
-document.getElementById('signup').addEventListener('submit',async e=>{e.preventDefault();const f=e.target,m=document.getElementById('formmsg');
-if(!f.name.value.trim()||!/^\S+@\S+\.\S+$/.test(f.email.value)){m.style.color='#fca5a5';m.textContent='تحقق من الاسم والبريد الإلكتروني';return}
-if(ENDPOINT){try{const r=await fetch(ENDPOINT,{method:'POST',headers:{Accept:'application/json'},body:new FormData(f)});if(!r.ok)throw 0}catch(_){m.style.color='#fca5a5';m.textContent='تعذر الإرسال، حاول لاحقا';return}}
-m.style.color='#86efac';m.textContent='✓ شكرا '+f.name.value.trim()+'، تم تسجيلك'+(ENDPOINT?'.':' (وضع تجريبي: لم يتم حفظ أي بيانات).');f.reset()});
+document.getElementById('dl').addEventListener('click',()=>{document.getElementById('dlmsg').textContent='✓ Download started';toast('Download started')});
+// Supabase Auth (REST, no library). Fill these two after the project is wired.
+const SB_URL="https://rofcjlvxzctevqjzgvyt.supabase.co",SB_KEY="sb_publishable_F4LnZ_xwqjOHEU_k9GdaEQ_uL2lctJq";
+let mode='signup';const f=document.getElementById('signup'),m=document.getElementById('formmsg');
+const say=(t,ok)=>{m.style.color=ok?'#86efac':'#fca5a5';m.textContent=t};
+document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>{mode=b.dataset.mode;
+document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('on',x===b));
+document.getElementById('lname').style.display=mode==='signup'?'':'none';
+document.getElementById('fsubmit').textContent=mode==='signup'?'Create account':'Sign in';
+document.getElementById('ftitle').textContent=mode==='signup'?'Create an account':'Sign in';
+f.pw.autocomplete=mode==='signup'?'new-password':'current-password'}));
+function showUser(email){const w=document.getElementById('who');w.hidden=false;w.textContent='✓ Signed in as '+email;}
+async function sb(path,body){const r=await fetch(SB_URL+path,{method:'POST',headers:{apikey:SB_KEY,'Content-Type':'application/json'},body:JSON.stringify(body)});return[r,await r.json().catch(()=>({}))]}
+f.addEventListener('submit',async e=>{e.preventDefault();
+if(!/^\S+@\S+\.\S+$/.test(f.email.value)||f.pw.value.length<8){say('Check your email and password (8 characters minimum)');return}
+if(mode==='signup'&&!f.name.value.trim()){say('Name is required');return}
+if(!SB_KEY){say('Accounts are opening soon. Please try again later.',true);return}
+try{if(mode==='signup'){const[r,d]=await sb('/auth/v1/signup',{email:f.email.value,password:f.pw.value,data:{name:f.name.value.trim()}});
+if(!r.ok)throw d;say('✓ Account created. Check your email to confirm, then sign in.',true)}
+else{const[r,d]=await sb('/auth/v1/token?grant_type=password',{email:f.email.value,password:f.pw.value});
+if(!r.ok)throw d;say('✓ Welcome back',true);showUser(f.email.value)}}
+catch(x){say(x&&x.msg?(x.msg.includes('Invalid login')?'Wrong email or password':x.msg):'Could not connect, try again later')}});
+
+document.documentElement.classList.add('js');
+const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}}),{threshold:.12});
+document.querySelectorAll('section:not(.hero) h2,.card,.pill,.cardbox,.formbox,.sh').forEach((el,i)=>{el.classList.add('rv');el.style.transitionDelay=(i%4)*60+'ms';io.observe(el)});
