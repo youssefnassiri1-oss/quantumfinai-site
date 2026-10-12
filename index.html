@@ -115,7 +115,7 @@
 <section id="dash" hidden>
   <h2>My account</h2>
   <div class="dtabs" id="dtabs"><button class="tab on" data-t="d-offers">Offers</button><button class="tab" data-t="d-rewards">Points</button><button class="tab" data-t="d-wd">Withdrawals</button><button class="tab" data-t="d-admin" id="tabadmin" hidden>Admin</button><button class="tab" id="signout">Sign out</button></div>
-  <div class="dpane" id="d-offers"><div class="note" id="dwho"></div><h3 class="sh">Available offers</h3><div class="grid" id="doffers"></div><h3 class="sh">My offers</h3><div class="list" id="dclaims"></div></div>
+  <div class="dpane" id="d-offers"><div class="note" id="dwho"></div><h3 class="sh">Available offers</h3><div class="formbox" style="max-width:420px;margin:0 0 18px"><p class="note" style="margin:0 0 10px">Quick human check before you start an offer.</p><div id="tshuman" class="ts"></div></div><div class="grid" id="doffers"></div><h3 class="sh">My offers</h3><div class="list" id="dclaims"></div></div>
   <div class="dpane" id="d-rewards" hidden><div class="bal"><span id="dbal">0</span> <small>points</small></div><h3 class="sh">History</h3><div class="list" id="dledger"></div></div>
   <div class="dpane" id="d-wd" hidden>
     <form id="wdform" class="formbox" style="max-width:520px;margin:0 0 24px"><h3 style="margin:0">Request a withdrawal</h3>
@@ -138,6 +138,7 @@
       <label>Category<select name="c"><option>surveys</option><option>apps</option><option>games</option><option>trials</option><option selected>tasks</option></select></label>
       <label>Points<input name="p" type="number" min="1" required></label><label>Minimum seconds to complete (optional)<input name="ms" type="number" min="0"></label><label>Maximum claims (optional)<input name="mc" type="number" min="0"></label><label>Status<select name="s"><option>draft</option><option selected>active</option></select></label>
       <button class="btn" type="submit">Save offer</button><p class="note" id="offmsg" aria-live="polite"></p></form>
+    <h3 class="sh">Networks</h3><div class="list" id="anets"></div>
     <h3 class="sh">All offers</h3><div class="list" id="aoffers"></div>
   </div>
 </section>
@@ -160,6 +161,7 @@
       <label id="lname">Full name<input name="name" autocomplete="name"></label>
       <label>Email<input name="email" type="email" required autocomplete="email"></label>
       <label>Password<input name="pw" type="password" minlength="8" required autocomplete="new-password"></label>
+      <div id="tsauth" class="ts"></div>
       <button class="btn big" type="submit" id="fsubmit">Create account</button>
       <p class="note" id="formmsg" aria-live="polite">Registration data (name and email) belongs to the site owner, Youssef Nassiri. It is never sold or shared. We never ask for banking details here.</p>
     </form>
@@ -170,6 +172,7 @@
 
 <footer><div class="fl"><a href="#how">How it works</a><a href="#offers">Offers</a><a href="#networks">Networks</a><a href="#trust">Protection</a><a href="#partners">Partners</a><a href="#faq">FAQ</a><a href="mailto:youssef@quantumfinai.me">Contact</a></div>© 2026 QuantumFinAI · quantumfinai.me · </footer>
 <div id="toast" role="status"></div>
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
 <script src="app.js"></script>
 </body>
 </html>
