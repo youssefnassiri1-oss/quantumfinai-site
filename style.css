@@ -114,3 +114,5 @@ select{padding:12px;border-radius:10px;border:1px solid #2d3a70;background:#0d13
 .faq details[open] p{animation:rise .3s both}
 .stats div{transition:transform .2s}.stats div:hover{transform:translateY(-3px)}
 .slot:hover{opacity:1}
+.st-low,.st-normal,.st-verified{background:#12331f;color:#86efac}.st-medium,.st-review{background:#33290f;color:#fcd34d}.st-high,.st-blocked,.st-reversed{background:#3a1620;color:#fca5a5}
+#netgrid .card .btn{margin-top:12px}
