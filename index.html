@@ -3,41 +3,92 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>QuantumFinAI | AI and finance</title>
-<meta name="description" content="QuantumFinAI: products, training and AI solutions for finance.">
+<title>QuantumFinAI | Complete offers, earn points</title>
+<meta name="description" content="QuantumFinAI: complete offers from partner companies and earn points. Plus finance, training and AI products.">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
 <header class="nav">
   <a class="brand" href="#top"><span class="logo">Q</span> QuantumFin<b>AI</b></a>
   <nav>
+    <a href="#how">How it works</a>
+    <a href="#offers">Offers</a>
+    <a href="#rewards">Rewards</a>
+    <a href="#payments">Withdrawals</a>
     <a href="#products-s">Products</a>
-    <a href="#formations">Training</a>
-    <a href="#card">Card</a>
-    <a href="#ai">AI solutions</a>
-    <a href="#payments">Payments</a>
     <a class="btn small" href="#account">Sign in / Sign up</a>
   </nav>
 </header>
 
 <main id="top">
 <section class="hero">
-  <div class="badge">Quantum · Finance · AI</div>
-  <h1>The future of finance, <span class="grad">powered by AI</span></h1>
-  <p class="sub">Quantum computing, finance and AI in one light, fast platform. Browse what is coming, create an account and grab the catalogue.</p>
+  <div class="badge">Offers · Points · Rewards</div>
+  <h1>Complete offers, <span class="grad">earn points</span></h1>
+  <p class="sub">Try offers and tasks from partner companies and collect points on your account. Partners are being added, so the offer list is empty for now.</p>
   <div class="cta">
-    <a class="btn big" id="dl" href="catalogue-quantumfinai.pdf" download>⬇ Download the catalogue</a>
-    <a class="btn ghost big" href="#products-s">Browse products</a>
+    <a class="btn big" href="#account">Create your account</a>
+    <a class="btn ghost big" href="#how">How it works</a>
   </div>
-  <p class="note" id="dlmsg" aria-live="polite">Light PDF file, under 2 KB</p>
+  <p class="note" id="dlmsg" aria-live="polite">Early access. Offers and withdrawals are not open yet.</p>
 </section>
 
-<section id="products-s">
+<section id="how">
+  <h2>How it works</h2>
+  <div class="grid steps">
+    <article class="card"><div class="thumb">1</div><h3>Choose an offer</h3><p>Browse tasks, surveys and trials from partner companies.</p></article>
+    <article class="card"><div class="thumb">2</div><h3>Complete it</h3><p>Follow the steps shown on the offer card.</p></article>
+    <article class="card"><div class="thumb">3</div><h3>Earn points</h3><p>Points are added to your balance once a partner confirms the offer.</p></article>
+  </div>
+</section>
+
+<section id="offers" class="alt">
+  <h2>Offers</h2>
+  <p class="note" style="margin:-14px 0 18px">Partner offers will appear here. No offers are live yet.</p>
+  <div class="pills chips" id="chips"></div>
+  <div class="grid" id="offergrid"></div>
+</section>
+
+<section id="rewards">
+  <h2>Your rewards</h2>
+  <div class="cardbox">
+    <div class="txt">
+      <h3 class="sh" style="margin-top:0">Points balance</h3>
+      <div class="bal"><span id="bal">0</span> <small>points</small></div>
+      <div class="bar"><i style="width:0%"></i></div>
+      <p class="note" id="balnote">Sign in to see your account. Points have no cash value at this stage.</p>
+    </div>
+    <div class="ccard" aria-hidden="true"><div class="chip"></div><div class="num">LEVEL 1</div><div class="row"><span>QUANTUMFINAI</span><span>REWARDS</span></div></div>
+  </div>
+</section>
+
+<section id="payments" class="alt">
+  <h2>Withdrawals</h2>
+  <p class="note" style="margin:-14px 0 22px">Withdrawals are not available yet. No money or funds are held on this site, and points have no cash value at this stage.</p>
+  <div class="pills" id="wd"></div>
+</section>
+
+<section id="partners">
+  <div class="formbox" style="text-align:center">
+    <h2>Become a partner</h2>
+    <p class="note">Companies can list offers here. Write to <a href="mailto:youssef@quantumfinai.me" style="color:var(--c)">youssef@quantumfinai.me</a>.</p>
+  </div>
+</section>
+
+<section id="faq" class="alt">
+  <h2>FAQ</h2>
+  <div class="faq">
+    <details><summary>Can I withdraw money today?</summary><p>No. Withdrawals are not open and the site holds no user funds.</p></details>
+    <details><summary>Are offers live?</summary><p>Not yet. Partner companies are being added.</p></details>
+    <details><summary>What data do you keep?</summary><p>Your name and email, for your account only. It is never sold or shared. We never ask for banking details.</p></details>
+  </div>
+</section>
+
+<section id="products-s" class="alt">
   <h2>Products</h2>
   <div class="grid" id="products"></div>
 </section>
 
-<section id="formations" class="alt">
+<section id="formations">
   <h2>Training</h2>
   <div class="grid" id="courses"></div>
 </section>
@@ -58,14 +109,6 @@
   <div class="grid" id="solutions"></div>
 </section>
 
-<section id="payments">
-  <h2>Payment and withdrawal methods</h2>
-  <p class="note" style="margin:-14px 0 22px">Payments and withdrawals are opening soon.</p>
-  <h3 class="sh">Payment methods</h3>
-  <div class="pills" id="pay"></div>
-  <h3 class="sh">Withdrawal methods</h3>
-  <div class="pills" id="wd"></div>
-</section>
 
 <section id="account" class="alt">
   <div class="formbox">
