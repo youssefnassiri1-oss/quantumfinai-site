@@ -48,3 +48,20 @@ footer{text-align:center;padding:30px;color:var(--mut);font-size:13px;border-top
 .pill{background:var(--card);border:1px solid #232d55;border-radius:12px;padding:12px 18px;font-size:15px;display:flex;gap:10px;align-items:center}
 .pill i{font-style:normal;font-weight:800;font-size:12px;padding:4px 8px;border-radius:6px;background:linear-gradient(135deg,var(--a),var(--b));direction:ltr}
 .card .def{font-size:13px;color:var(--c)}
+.tabs{display:flex;gap:8px;margin-bottom:18px}.tab{flex:1;padding:9px;border-radius:10px;border:1px solid #2d3a70;background:transparent;color:var(--mut);font:inherit;cursor:pointer}.tab.on{background:linear-gradient(135deg,var(--a),var(--b));color:#fff;border-color:transparent}
+/* motion */
+@keyframes rise{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
+@keyframes float{0%,100%{transform:rotate(-3deg) translateY(0)}50%{transform:rotate(-3deg) translateY(-10px)}}
+@keyframes glow{0%,100%{opacity:.55}50%{opacity:1}}
+.hero>*{animation:rise .7s both}.hero>*:nth-child(2){animation-delay:.08s}.hero>*:nth-child(3){animation-delay:.16s}.hero>*:nth-child(4){animation-delay:.24s}.hero>*:nth-child(5){animation-delay:.32s}
+.hero{position:relative;overflow:hidden}.hero::before{content:"";position:absolute;inset:-30% 20% auto;height:420px;background:radial-gradient(circle,rgba(34,211,238,.18),transparent 65%);animation:glow 6s ease-in-out infinite;pointer-events:none}
+.js .rv{opacity:0;transform:translateY(22px);transition:opacity .6s ease,transform .6s ease}
+.js .rv.in{opacity:1;transform:none}
+.card,.pill,.btn,.tab,input{transition:transform .25s ease,box-shadow .25s ease,border-color .25s ease,background .25s ease,opacity .6s ease}
+.card:hover{box-shadow:0 14px 34px rgba(79,140,255,.18)}
+.thumb{transition:filter .3s}.card:hover .thumb{filter:brightness(1.15)}
+.pill:hover{transform:translateY(-3px);border-color:var(--a)}
+.ccard{animation:float 6s ease-in-out infinite}.ccard:hover{animation-play-state:paused}
+.nav nav a:not(.btn){position:relative}.nav nav a:not(.btn)::after{content:"";position:absolute;left:0;bottom:-4px;height:2px;width:0;background:var(--c);transition:width .25s}.nav nav a:not(.btn):hover::after{width:100%}
+.btn:active{transform:scale(.97)}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}.js .rv{opacity:1;transform:none}html{scroll-behavior:auto}}
