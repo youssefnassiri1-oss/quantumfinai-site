@@ -32,7 +32,7 @@
     <a class="btn big" href="#account">Create your account</a>
     <a class="btn ghost big" href="#how">How it works</a>
   </div>
-  <p class="note" id="dlmsg" aria-live="polite">Early access. Offers and withdrawals are not open yet.</p>
+  <p class="note" id="dlmsg" aria-live="polite">Early access. Partner offers are being added.</p>
   <div class="stats">
     <div><b>Free</b><span>to join</span></div>
     <div><b>Verified</b><span>email accounts</span></div>
@@ -51,7 +51,7 @@
 
 <section id="offers" class="alt">
   <h2>Offers</h2>
-  <p class="note" style="margin:-14px 0 18px">Partner offers will appear here. No offers are live yet.</p>
+  <p class="note" style="margin:-14px 0 18px">Partner offers will appear here. </p>
   <div class="pills chips" id="chips"></div>
   <div class="grid" id="offergrid"></div>
 </section>
@@ -63,7 +63,7 @@
       <h3 class="sh" style="margin-top:0">Points balance</h3>
       <div class="bal"><span id="bal">0</span> <small>points</small></div>
       <div class="bar"><i style="width:0%"></i></div>
-      <p class="note" id="balnote">Sign in to see your account. Points have no cash value at this stage.</p>
+      <p class="note" id="balnote">Sign in to see your points and requests.</p>
     </div>
     <div class="ccard" aria-hidden="true"><div class="chip"></div><div class="num">LEVEL 1</div><div class="row"><span>QUANTUMFINAI</span><span>REWARDS</span></div></div>
   </div>
@@ -71,7 +71,7 @@
 
 <section id="payments" class="alt">
   <h2>Withdrawals</h2>
-  <p class="note" style="margin:-14px 0 22px">Withdrawals are not available yet. No money or funds are held on this site, and points have no cash value at this stage.</p>
+  <p class="note" style="margin:-14px 0 22px">Withdrawal requests are reviewed before approval. Choose a method, request an amount and follow the status of your request.</p>
   <div class="pills" id="wd"></div>
 </section>
 
@@ -91,10 +91,34 @@
   </div>
 </section>
 
+<section id="dash" hidden>
+  <h2>My account</h2>
+  <div class="dtabs" id="dtabs"><button class="tab on" data-t="d-offers">Offers</button><button class="tab" data-t="d-rewards">Points</button><button class="tab" data-t="d-wd">Withdrawals</button><button class="tab" data-t="d-admin" id="tabadmin" hidden>Admin</button><button class="tab" id="signout">Sign out</button></div>
+  <div class="dpane" id="d-offers"><div class="note" id="dwho"></div><h3 class="sh">Available offers</h3><div class="grid" id="doffers"></div><h3 class="sh">My offers</h3><div class="list" id="dclaims"></div></div>
+  <div class="dpane" id="d-rewards" hidden><div class="bal"><span id="dbal">0</span> <small>points</small></div><h3 class="sh">History</h3><div class="list" id="dledger"></div></div>
+  <div class="dpane" id="d-wd" hidden>
+    <form id="wdform" class="formbox" style="max-width:520px;margin:0 0 24px"><h3 style="margin:0">Request a withdrawal</h3>
+      <label>Method<select name="m" id="wdm"></select></label>
+      <label>Points<input name="p" type="number" min="1" step="1" required></label>
+      <label>Payout details<input name="d" maxlength="200" required placeholder="Account or address for this method"></label>
+      <button class="btn" type="submit">Send request</button><p class="note" id="wdmsg" aria-live="polite">Requests are reviewed before approval. Do not enter card numbers or passwords.</p></form>
+    <h3 class="sh">My requests</h3><div class="list" id="dwd"></div></div>
+  <div class="dpane" id="d-admin" hidden>
+    <h3 class="sh">Claims to review</h3><div class="list" id="aclaims"></div>
+    <h3 class="sh">Withdrawal requests</h3><div class="list" id="awd"></div>
+    <h3 class="sh">Add an offer</h3>
+    <form id="offform" class="formbox" style="max-width:520px;margin:0"><label>Partner company<input name="pa" required maxlength="80"></label><label>Offer title<input name="t" required maxlength="120"></label><label>Description<input name="d" maxlength="1000"></label>
+      <label>Category<select name="c"><option>surveys</option><option>apps</option><option>games</option><option>trials</option><option selected>tasks</option></select></label>
+      <label>Points<input name="p" type="number" min="1" required></label><label>Status<select name="s"><option>draft</option><option selected>active</option></select></label>
+      <button class="btn" type="submit">Save offer</button><p class="note" id="offmsg" aria-live="polite"></p></form>
+    <h3 class="sh">All offers</h3><div class="list" id="aoffers"></div>
+  </div>
+</section>
+
 <section id="faq" class="alt">
   <h2>FAQ</h2>
   <div class="faq">
-    <details><summary>Can I withdraw money today?</summary><p>No. Withdrawals are not open and the site holds no user funds.</p></details>
+    <details><summary>Can I withdraw money today?</summary><p>You can submit a withdrawal request once you have enough points. Each request is reviewed before approval and you can follow its status in your account.</p></details>
     <details><summary>Are offers live?</summary><p>Not yet. Partner companies are being added.</p></details>
     <details><summary>What data do you keep?</summary><p>Your name and email, for your account only. It is never sold or shared. We never ask for banking details.</p></details>
   </div>
@@ -143,7 +167,7 @@
 </section>
 </main>
 
-<footer><div class="fl"><a href="#how">How it works</a><a href="#offers">Offers</a><a href="#partners">Partners</a><a href="#faq">FAQ</a><a href="mailto:youssef@quantumfinai.me">Contact</a></div>© 2026 QuantumFinAI · quantumfinai.me · No user funds are held on this site.</footer>
+<footer><div class="fl"><a href="#how">How it works</a><a href="#offers">Offers</a><a href="#partners">Partners</a><a href="#faq">FAQ</a><a href="mailto:youssef@quantumfinai.me">Contact</a></div>© 2026 QuantumFinAI · quantumfinai.me · </footer>
 <div id="toast" role="status"></div>
 <script src="app.js"></script>
 </body>
