@@ -34,5 +34,9 @@ if(!r.ok)throw d;say('✓ Welcome back',true);showUser(f.email.value)}}
 catch(x){say(x&&x.msg?(x.msg.includes('Invalid login')?'Wrong email or password':x.msg):'Could not connect, try again later')}});
 
 document.documentElement.classList.add('js');
-const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}}),{threshold:.12});
-document.querySelectorAll('section:not(.hero) h2,.card,.pill,.cardbox,.formbox,.sh').forEach((el,i)=>{el.classList.add('rv');el.style.transitionDelay=(i%4)*60+'ms';io.observe(el)});
+const rv=[...document.querySelectorAll('section:not(.hero) h2,.card,.pill,.cardbox,.formbox,.sh')];
+rv.forEach((el,i)=>{el.classList.add('rv');el.style.transitionDelay=(i%4)*60+'ms'});
+let tick=false;function reveal(){tick=false;const h=innerHeight;rv.forEach(el=>{if(!el.classList.contains('in')&&el.getBoundingClientRect().top<h*0.92)el.classList.add('in')})}
+function req(){if(!tick){tick=true;requestAnimationFrame(reveal)}}
+addEventListener('scroll',req,{passive:true});addEventListener('resize',req);reveal();
+setTimeout(()=>rv.forEach(el=>el.classList.add('in')),5000);
