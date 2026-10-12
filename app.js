@@ -98,6 +98,7 @@ if(d.rw){const[i,s]=d.rw.split('|');const n=prompt('Note (optional)')||'';act(()
 if(d.rev){const n=prompt('Reason for reversal')||'';act(()=>rpc('admin_reverse_claim',{p_claim:d.rev,p_note:n}),'Claim reversed')}
 if(d.us){const[i,s]=d.us.split('|');act(()=>rpc('admin_set_user_status',{p_user:i,p_status:s,p_note:'Set by admin'}),'User status: '+s)}
 if(d.rf)act(()=>rpc('admin_resolve_flag',{p_id:d.rf}),'Flag resolved')
+if(d.thr){const v=String(parseInt(document.getElementById('thr').value,10));if(!(v>=1&&v<=100)){toast('Enter a number from 1 to 100');return}act(async()=>{await rpc('admin_set_setting',{p_key:'ip_score_threshold',p_value:v})},'Threshold saved')}
 if(d.ns){const[i,s]=d.ns.split('|');act(async()=>{await rpc('admin_set_partner_status',{p_id:i,p_status:s});loadPublic()},'Network status updated')}
 if(d.os){const[i,s]=d.os.split('|');act(()=>rpc('admin_set_offer_status',{p_offer:i,p_status:s}),'Offer updated')}});
 document.getElementById('wdform').addEventListener('submit',e=>{e.preventDefault();const f=e.target;act(async()=>{const r=await rpc('request_withdrawal',{p_method:f.m.value,p_points:parseInt(f.p.value,10),p_destination:f.d.value});if(r)f.reset();return r},'Request sent',true)});
