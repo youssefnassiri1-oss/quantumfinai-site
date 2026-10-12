@@ -93,3 +93,24 @@ h2{font-size:clamp(26px,4vw,38px);letter-spacing:-.01em;text-align:center;margin
 a:focus-visible,button:focus-visible,summary:focus-visible,input:focus-visible{outline:2px solid var(--c);outline-offset:2px}
 footer{padding:36px 5vw}.fl{display:flex;gap:20px;justify-content:center;flex-wrap:wrap;margin-bottom:14px}.fl a:hover{color:#fff}
 @media(max-width:720px){.nav nav{gap:12px}.nav nav a.btn{padding:7px 12px}.cardbox{padding:26px}.ccard{width:100%;max-width:320px}.btn.big{width:100%;text-align:center}.cta{flex-direction:column}}
+
+select{padding:12px;border-radius:10px;border:1px solid #2d3a70;background:#0d1330;color:#fff;font:inherit}
+#dash .dtabs{display:flex;gap:8px;flex-wrap:wrap;max-width:1100px;margin:0 auto 24px}#dash .dtabs .tab{flex:0 0 auto;padding:9px 18px}
+.dpane{max-width:1100px;margin:auto}.list{display:flex;flex-direction:column;gap:10px}
+.lrow{display:grid;grid-template-columns:1.2fr 1.4fr auto;gap:14px;align-items:center;background:var(--card);border:1px solid #232d55;border-radius:12px;padding:12px 16px}
+.lrow .lm{color:var(--mut);font-size:14px}.lrow small{color:var(--mut)}
+.st{display:inline-block;font-size:12px;padding:3px 10px;border-radius:99px;background:#1f2a55;color:var(--c);text-transform:capitalize}
+.st-approved,.st-paid,.st-active{background:#12331f;color:#86efac}.st-rejected,.st-cancelled{background:#3a1620;color:#fca5a5}.st-completed,.st-under_review{background:#33290f;color:#fcd34d}
+@media(max-width:720px){.lrow{grid-template-columns:1fr}}
+[hidden]{display:none!important}
+/* micro-interactions */
+@keyframes pop{0%{transform:scale(.96);opacity:0}100%{transform:none;opacity:1}}
+.lrow{transition:transform .2s,border-color .2s,box-shadow .2s;animation:pop .35s both}.lrow:hover{transform:translateX(4px);border-color:var(--a)}
+.dpane:not([hidden]){animation:rise .4s both}
+.bal span{display:inline-block;animation:pop .5s both}
+.tab:hover:not(.on){border-color:var(--a);color:#fff}
+.btn.small:active,.btn:active{transform:scale(.96)}
+.faq details{transition:border-color .2s,background .2s}.faq details:hover{border-color:#33407a}
+.faq details[open] p{animation:rise .3s both}
+.stats div{transition:transform .2s}.stats div:hover{transform:translateY(-3px)}
+.slot:hover{opacity:1}
