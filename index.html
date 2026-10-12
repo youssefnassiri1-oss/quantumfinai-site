@@ -16,6 +16,8 @@
   <nav>
     <a href="#how">How it works</a>
     <a href="#offers">Offers</a>
+    <a href="#networks">Networks</a>
+    <a href="#trust">Protection</a>
     <a href="#rewards">Rewards</a>
     <a href="#payments">Withdrawals</a>
     <a href="#partners">Partners</a>
@@ -54,6 +56,25 @@
   <p class="note" style="margin:-14px 0 18px">Partner offers will appear here. </p>
   <div class="pills chips" id="chips"></div>
   <div class="grid" id="offergrid"></div>
+</section>
+
+<section id="networks">
+  <h2>Offer networks</h2>
+  <p class="lead">Offer and rewards networks we plan to work with. These companies are independent. We are not affiliated with them and no partnership is in place yet.</p>
+  <div class="grid" id="netgrid"></div>
+</section>
+
+<section id="trust" class="alt">
+  <h2>How offers are verified</h2>
+  <p class="lead">Every offer goes through the same checks before any points are added to a balance.</p>
+  <div class="grid steps">
+    <article class="card"><div class="thumb">1</div><h3>One claim per offer</h3><p>Each account can start an offer once. Repeat claims are refused by the database itself.</p></article>
+    <article class="card"><div class="thumb">2</div><h3>Time and volume limits</h3><p>Offers can set a minimum completion time and a total cap. Rapid-fire activity is rate limited and flagged.</p></article>
+    <article class="card"><div class="thumb">3</div><h3>Duplicate account checks</h3><p>Accounts that share a device or a payout destination are flagged and moved to manual review.</p></article>
+    <article class="card"><div class="thumb">4</div><h3>Confirmed completions</h3><p>Network confirmations carry a unique transaction ID. A repeated ID is ignored, so nothing is credited twice.</p></article>
+    <article class="card"><div class="thumb">5</div><h3>Manual review queue</h3><p>Claims and withdrawal requests are reviewed by a person. Approved claims can be reversed if a network cancels them.</p></article>
+    <article class="card"><div class="thumb">6</div><h3>Full audit log</h3><p>Every change to offers, claims, flags and requests is recorded with who made it and when.</p></article>
+  </div>
 </section>
 
 <section id="rewards">
@@ -106,10 +127,16 @@
   <div class="dpane" id="d-admin" hidden>
     <h3 class="sh">Claims to review</h3><div class="list" id="aclaims"></div>
     <h3 class="sh">Withdrawal requests</h3><div class="list" id="awd"></div>
+    <h3 class="sh">Fraud flags</h3><div class="list" id="aflags"></div>
+    <h3 class="sh">Users under review or blocked</h3><div class="list" id="ausers"></div>
+    <h3 class="sh">Network confirmation log</h3><p class="note">Confirmations are recorded here by an admin. Each transaction ID can be recorded once. There is no automatic receiver yet.</p><div class="list" id="apb"></div>
+    <form id="pbform" class="formbox" style="max-width:520px;margin:12px 0 24px"><label>Network<select name="n" id="pbn"></select></label><label>Transaction ID<input name="x" required maxlength="120"></label>
+      <label>Type<select name="t"><option>conversion</option><option>reversal</option></select></label><label>Claim ID (optional)<input name="c" maxlength="40"></label><label>Points<input name="p" type="number" min="0"></label>
+      <label><input type="checkbox" name="s"> Signature verified by the network</label><button class="btn" type="submit">Record confirmation</button><p class="note" id="pbmsg" aria-live="polite"></p></form>
     <h3 class="sh">Add an offer</h3>
     <form id="offform" class="formbox" style="max-width:520px;margin:0"><label>Partner company<input name="pa" required maxlength="80"></label><label>Offer title<input name="t" required maxlength="120"></label><label>Description<input name="d" maxlength="1000"></label>
       <label>Category<select name="c"><option>surveys</option><option>apps</option><option>games</option><option>trials</option><option selected>tasks</option></select></label>
-      <label>Points<input name="p" type="number" min="1" required></label><label>Status<select name="s"><option>draft</option><option selected>active</option></select></label>
+      <label>Points<input name="p" type="number" min="1" required></label><label>Minimum seconds to complete (optional)<input name="ms" type="number" min="0"></label><label>Maximum claims (optional)<input name="mc" type="number" min="0"></label><label>Status<select name="s"><option>draft</option><option selected>active</option></select></label>
       <button class="btn" type="submit">Save offer</button><p class="note" id="offmsg" aria-live="polite"></p></form>
     <h3 class="sh">All offers</h3><div class="list" id="aoffers"></div>
   </div>
@@ -119,37 +146,11 @@
   <h2>FAQ</h2>
   <div class="faq">
     <details><summary>Can I withdraw money today?</summary><p>You can submit a withdrawal request once you have enough points. Each request is reviewed before approval and you can follow its status in your account.</p></details>
-    <details><summary>Are offers live?</summary><p>Not yet. Partner companies are being added.</p></details>
+    <details><summary>Are the listed networks partners?</summary><p>No. The networks listed on this site are independent companies. We are not affiliated with them and no partnership is in place yet.</p></details>
+    <details><summary>How do you prevent abuse?</summary><p>One claim per offer per account, minimum completion times, rate limits, duplicate-account checks, a manual review queue and an audit log. Accounts can be placed under review or blocked.</p></details>
     <details><summary>What data do you keep?</summary><p>Your name and email, for your account only. It is never sold or shared. We never ask for banking details.</p></details>
   </div>
 </section>
-
-<section id="products-s" class="alt">
-  <h2>Products</h2>
-  <div class="grid" id="products"></div>
-</section>
-
-<section id="formations">
-  <h2>Training</h2>
-  <div class="grid" id="courses"></div>
-</section>
-
-<section id="card">
-  <div class="cardbox">
-    <div class="txt">
-      <h2>QuantumFin card</h2>
-      <p>Coming soon. A smart card for modern finance.</p>
-      <button class="btn" disabled style="opacity:.6;cursor:default">Coming soon</button>
-    </div>
-    <div class="ccard" aria-hidden="true"><div class="chip"></div><div class="num">•••• •••• •••• 0000</div><div class="row"><span>QUANTUMFINAI</span><span>CARD</span></div></div>
-  </div>
-</section>
-
-<section id="ai" class="alt">
-  <h2>New AI solutions</h2>
-  <div class="grid" id="solutions"></div>
-</section>
-
 
 <section id="account" class="alt">
   <div class="formbox">
@@ -167,7 +168,7 @@
 </section>
 </main>
 
-<footer><div class="fl"><a href="#how">How it works</a><a href="#offers">Offers</a><a href="#partners">Partners</a><a href="#faq">FAQ</a><a href="mailto:youssef@quantumfinai.me">Contact</a></div>© 2026 QuantumFinAI · quantumfinai.me · </footer>
+<footer><div class="fl"><a href="#how">How it works</a><a href="#offers">Offers</a><a href="#networks">Networks</a><a href="#trust">Protection</a><a href="#partners">Partners</a><a href="#faq">FAQ</a><a href="mailto:youssef@quantumfinai.me">Contact</a></div>© 2026 QuantumFinAI · quantumfinai.me · </footer>
 <div id="toast" role="status"></div>
 <script src="app.js"></script>
 </body>
