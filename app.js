@@ -50,8 +50,12 @@ const badge=s=>`<span class="st st-${esc(s)}">${esc(s.replace('_',' '))}</span>`
 const when=t=>new Date(t).toLocaleString();
 const row=(a,b,c)=>`<div class="lrow"><div>${a}</div><div class="lm">${b||''}</div><div class="la">${c||''}</div></div>`;
 const empty=t=>`<p class="note">${t}</p>`;
+const CH=['All','Surveys','Apps','Games','Trials','Tasks'];
+document.getElementById('chips').innerHTML=CH.map((n,i)=>`<div class="pill${i?'':' on'}">${n}</div>`).join('');
+const SLOTS=Array.from({length:6},()=>`<article class="card slot"><div class="thumb">+</div><span class="tag">Coming soon</span><h3>Partner company</h3><p>Offer details coming soon.</p><div class="pts">-- points</div></article>`).join('');
+document.getElementById('offergrid').innerHTML=SLOTS;
 async function loadPublic(){try{const[o,m]=await Promise.all([api('offers?select=id,title,description,category,points&status=eq.active&order=created_at.desc'),api('withdrawal_methods?select=code,label,min_points&active=eq.true')]);
-if(o.length)document.getElementById('offergrid').innerHTML=o.map(x=>`<article class="card"><div class="thumb">◇</div><span class="tag">${esc(x.category)}</span><h3>${esc(x.title)}</h3><p>${esc(x.description||'')}</p><div class="pts">${x.points} points</div><a class="btn small" href="#account">Sign in to start</a></article>`).join('');
+document.getElementById('offergrid').innerHTML=o.length?o.map(x=>`<article class="card"><div class="thumb">◇</div><span class="tag">${esc(x.category)}</span><h3>${esc(x.title)}</h3><p>${esc(x.description||'')}</p><div class="pts">${x.points} points</div><a class="btn small" href="#account">Sign in to start</a></article>`).join(''):SLOTS;
 document.getElementById('wd').innerHTML=m.map(x=>`<div class="pill"><i>${esc(x.label.slice(0,2).toUpperCase())}</i>${esc(x.label)}<small>from ${x.min_points} points</small></div>`).join('');
 document.getElementById('wdm').innerHTML=m.map(x=>`<option value="${esc(x.code)}">${esc(x.label)} (min ${x.min_points})</option>`).join('')}catch(e){}}
 async function loadDash(){try{
