@@ -65,3 +65,31 @@ footer{text-align:center;padding:30px;color:var(--mut);font-size:13px;border-top
 .nav nav a:not(.btn){position:relative}.nav nav a:not(.btn)::after{content:"";position:absolute;left:0;bottom:-4px;height:2px;width:0;background:var(--c);transition:width .25s}.nav nav a:not(.btn):hover::after{width:100%}
 .btn:active{transform:scale(.97)}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}.js .rv{opacity:1;transform:none}html{scroll-behavior:auto}}
+
+.bal{font-size:44px;font-weight:800}.bal small{font-size:16px;color:var(--mut);font-weight:500}
+.bar{height:8px;border-radius:8px;background:#1e2748;margin:10px 0 14px;overflow:hidden}.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--a),var(--c))}
+.slot{opacity:.85;border-style:dashed}.pts{margin-top:8px;color:var(--c);font-weight:600}
+.pill small{display:block;color:var(--mut);font-size:12px}.chips .pill{cursor:default}.chips .pill.on{border-color:var(--a);color:#fff}
+.faq{max-width:760px;margin:0 auto}.faq details{background:var(--card);border:1px solid #1e2748;border-radius:12px;padding:14px 18px;margin-bottom:10px}
+.faq summary{cursor:pointer;font-weight:600}.faq p{color:var(--mut);margin:8px 0 0}
+
+/* premium pass */
+body{-webkit-font-smoothing:antialiased;overflow-x:hidden}
+.nav{padding:12px 5vw}.nav nav{gap:20px}
+.hero{padding:clamp(56px,10vw,120px) 5vw clamp(48px,7vw,80px);background:radial-gradient(ellipse at 50% -10%,#24388a 0,transparent 60%),radial-gradient(circle at 85% 30%,rgba(139,92,246,.18),transparent 45%)}
+h1{letter-spacing:-.02em;line-height:1.12;font-size:clamp(34px,7vw,68px)}
+.sub{font-size:clamp(16px,2.2vw,20px)}
+.stats{display:flex;justify-content:center;gap:clamp(18px,5vw,56px);margin-top:44px;flex-wrap:wrap}
+.stats div{display:flex;flex-direction:column;align-items:center}.stats b{font-size:22px;background:linear-gradient(90deg,var(--a),var(--c));-webkit-background-clip:text;background-clip:text;color:transparent}.stats span{font-size:13px;color:var(--mut)}
+section{padding:clamp(48px,8vw,96px) 5vw}
+h2{font-size:clamp(26px,4vw,38px);letter-spacing:-.01em;text-align:center;margin-bottom:34px}
+.lead{max-width:640px;margin:-16px auto 34px;text-align:center;color:var(--mut)}
+.grid{max-width:1100px;margin:auto}
+.card{background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.01)),var(--card);box-shadow:0 1px 0 rgba(255,255,255,.04) inset}
+.steps .thumb{height:70px;font-size:30px}
+.pills{justify-content:center;max-width:1100px;margin:auto}
+.faq details[open]{border-color:var(--a)}
+.btn{box-shadow:0 6px 20px rgba(79,140,255,.22)}
+a:focus-visible,button:focus-visible,summary:focus-visible,input:focus-visible{outline:2px solid var(--c);outline-offset:2px}
+footer{padding:36px 5vw}.fl{display:flex;gap:20px;justify-content:center;flex-wrap:wrap;margin-bottom:14px}.fl a:hover{color:#fff}
+@media(max-width:720px){.nav nav{gap:12px}.nav nav a.btn{padding:7px 12px}.cardbox{padding:26px}.ccard{width:100%;max-width:320px}.btn.big{width:100%;text-align:center}.cta{flex-direction:column}}
