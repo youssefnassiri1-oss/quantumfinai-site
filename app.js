@@ -8,7 +8,7 @@ function tsRender(id){if(TSW[id]!==undefined||!window.turnstile)return;const el=
 function tsToken(id){return window.turnstile&&TSW[id]!==undefined?turnstile.getResponse(TSW[id]):''}
 function tsReset(id){if(window.turnstile&&TSW[id]!==undefined)turnstile.reset(TSW[id])}
 const tsWait=setInterval(()=>{if(window.turnstile){clearInterval(tsWait);tsRender('tsauth')}},300);
-const SB_URL="https://rofcjlvxzctevqjzgvyt.supabase.co",SB_KEY="REDACTED_PUBLISHABLE_KEY";
+const SB_URL="https://rofcjlvxzctevqjzgvyt.supabase.co",SB_KEY="sb_publishable_F4LnZ_xwqjOHEU_k9GdaEQ_uL2lctJq";
 let mode='signup';const f=document.getElementById('signup'),m=document.getElementById('formmsg');
 const say=(t,ok)=>{m.style.color=ok?'#86efac':'#fca5a5';m.textContent=t};
 document.querySelectorAll('.tabs .tab').forEach(b=>b.addEventListener('click',()=>{mode=b.dataset.mode;
