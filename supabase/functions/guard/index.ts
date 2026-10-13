@@ -245,7 +245,7 @@ Deno.serve(async (req)=>{
     if (body.action === "register" || body.action === "monitor") {
       const hash = String(body.hash || "").slice(0, 128);
       const fp = typeof body.fp === "object" && body.fp ? body.fp : null;
-      const out = {};
+      const out: Record<string, unknown> = {};
       if (hash.length >= 16) {
         const ih = ip ? await sha(ip + "qf-salt") : null;
         await rest("devices?on_conflict=user_id,device_hash", "POST", {
@@ -257,12 +257,12 @@ Deno.serve(async (req)=>{
         }, {
           Prefer: "resolution=merge-duplicates"
         });
-        // similar fingerprints on other accounts (computed in SQL, no bulk fetch)
+        // Fast SQL fingerprint check instead of fetching 2000 rows into memory
         if (fp && fp.gpu) {
-          const sc = Number(await rest("rpc/check_fp_similarity", "POST", { p_user: uid, p_fp: fp }) || 0);
-          out.similar_accounts = sc;
-          if (sc >= 1) {
-            await flag(uid, "similar_device", sc >= 2 ? "high" : "medium", `Device fingerprint closely matches ${sc} other account(s)`);
+          const simCount = Number(await rest("rpc/check_fp_similarity", "POST", { p_user: uid, p_fp: fp }) || 0);
+          out.similar_accounts = simCount;
+          if (simCount >= 1) {
+            await flag(uid, "similar_device", simCount >= 2 ? "high" : "medium", `Device fingerprint closely matches ${simCount} other account(s)`);
             await review(uid, "Similar device fingerprint");
           }
         }
@@ -272,46 +272,13 @@ Deno.serve(async (req)=>{
         out.ip_source = rep.source;
         const th = Number(await setting("ip_score_threshold", "5"));
         const rp = await setting("review_on_proxy", "true") === "true";
-        if (rp && rep.proxy || rep.score !== null && rep.score !== undefined && rep.score >= th) {
-          await flag(uid, "ip_reputation", rep.proxy || (rep.score ?? 0) >= 60 ? "high" : "medium", `IP check (${rep.source}): score ${rep.score ?? "n/a"}${rep.proxy ? ", proxy/VPN/datacenter" : ""}${rep.kind ? ", type " + rep.kind : ""}`);
+        if ((rp && rep.proxy) || (rep.score !== null && rep.score !== undefined && rep.score >= th)) {
+          await flag(uid, "ip_reputation", rep.proxy || (rep.score ?? 0) >= 60 ? "high" : "medium", `IP check (${rep.source}): score ${rep.score ?? "n/a"}${rep.proxy ? ", proxy/VPN/datacenter" : ""}`);
           await review(uid, "IP reputation");
           out.ip_flagged = true;
         }
       }
-      // AI monitor
-      const claims = await rest(`offer_claims?select=created_at&user_id=eq.${uid}&order=created_at&limit=1`) || [];
-      const flags = await rest(`fraud_flags?select=kind,severity&user_id=eq.${uid}&resolved=eq.false&limit=20`) || [];
-      const created = new Date(user.created_at).getTime();
-      const em = String(user.email || "");
-      const local = em.split("@")[0] || "";
-      const facts = {
-        account_age_minutes: Math.round((Date.now() - created) / 60000),
-        signup_provider: user.app_metadata?.provider || "email",
-        email_domain: em.split("@")[1] || "",
-        email_local_length: local.length,
-        email_local_digit_ratio: local.length ? +(local.replace(/\D/g, "").length / local.length).toFixed(2) : 0,
-        seconds_from_signup_to_first_offer: claims.length ? Math.round((new Date(claims[0].created_at).getTime() - created) / 1000) : null,
-        open_flags: flags.map((f)=>f.kind + ":" + f.severity),
-        similar_accounts: out.similar_accounts ?? 0,
-        ip_flagged: !!out.ip_flagged
-      };
-      // AI monitor runs in the background so the response is not delayed
-      const runAi = (async () => {
-        const g = await gemini(facts);
-        if (g) {
-          out.ai = g.risk;
-          if (g.risk !== "low") {
-            await flag(uid, "ai_monitor", g.risk === "high" ? "high" : "medium", "AI monitor (" + g.risk + "): " + g.reasons.join("; "));
-            if (g.risk === "high") await review(uid, "AI monitor");
-          }
-        }
-      })().catch(() => {});
-      // @ts-ignore EdgeRuntime is provided by Supabase
-      if (typeof EdgeRuntime !== "undefined" && EdgeRuntime.waitUntil) EdgeRuntime.waitUntil(runAi); else await runAi;
-      return J({
-        ok: true,
-        ...out
-      });
+      return J({ ok: true, ...out });
     }
     return J({
       error: "unknown action"
