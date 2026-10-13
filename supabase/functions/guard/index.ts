@@ -257,17 +257,12 @@ Deno.serve(async (req)=>{
         }, {
           Prefer: "resolution=merge-duplicates"
         });
-        // similar fingerprints on other accounts
-        if (fp) {
-          const others = await rest(`devices?select=user_id,fp&user_id=neq.${uid}&fp=not.is.null&limit=2000`) || [];
-          const users = new Set();
-          for (const o of others){
-            const s = sim(fp, o.fp);
-            if (s.n >= 6 && s.m >= s.n - 1 && fp.gpu) users.add(o.user_id);
-          }
-          out.similar_accounts = users.size;
-          if (users.size >= 1) {
-            await flag(uid, "similar_device", users.size >= 2 ? "high" : "medium", `Device fingerprint closely matches ${users.size} other account(s)`);
+        // similar fingerprints on other accounts (computed in SQL, no bulk fetch)
+        if (fp && fp.gpu) {
+          const sc = Number(await rest("rpc/check_fp_similarity", "POST", { p_user: uid, p_fp: fp }) || 0);
+          out.similar_accounts = sc;
+          if (sc >= 1) {
+            await flag(uid, "similar_device", sc >= 2 ? "high" : "medium", `Device fingerprint closely matches ${sc} other account(s)`);
             await review(uid, "Similar device fingerprint");
           }
         }
@@ -300,14 +295,19 @@ Deno.serve(async (req)=>{
         similar_accounts: out.similar_accounts ?? 0,
         ip_flagged: !!out.ip_flagged
       };
-      const g = await gemini(facts);
-      if (g) {
-        out.ai = g.risk;
-        if (g.risk !== "low") {
-          await flag(uid, "ai_monitor", g.risk === "high" ? "high" : "medium", "AI monitor (" + g.risk + "): " + g.reasons.join("; "));
-          if (g.risk === "high") await review(uid, "AI monitor");
+      // AI monitor runs in the background so the response is not delayed
+      const runAi = (async () => {
+        const g = await gemini(facts);
+        if (g) {
+          out.ai = g.risk;
+          if (g.risk !== "low") {
+            await flag(uid, "ai_monitor", g.risk === "high" ? "high" : "medium", "AI monitor (" + g.risk + "): " + g.reasons.join("; "));
+            if (g.risk === "high") await review(uid, "AI monitor");
+          }
         }
-      }
+      })().catch(() => {});
+      // @ts-ignore EdgeRuntime is provided by Supabase
+      if (typeof EdgeRuntime !== "undefined" && EdgeRuntime.waitUntil) EdgeRuntime.waitUntil(runAi); else await runAi;
       return J({
         ok: true,
         ...out
