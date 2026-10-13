@@ -8,7 +8,7 @@ function tsRender(id){if(TSW[id]!==undefined||!window.turnstile)return;const el=
 function tsToken(id){return window.turnstile&&TSW[id]!==undefined?turnstile.getResponse(TSW[id]):''}
 function tsReset(id){if(window.turnstile&&TSW[id]!==undefined)turnstile.reset(TSW[id])}
 const tsWait=setInterval(()=>{if(window.turnstile){clearInterval(tsWait);tsRender('tsauth')}},300);
-const SB_URL="https://rofcjlvxzctevqjzgvyt.supabase.co",SB_KEY="sb_publishable_F4LnZ_xwqjOHEU_k9GdaEQ_uL2lctJq";
+const SB_URL="https://rofcjlvxzctevqjzgvyt.supabase.co",SB_KEY="REDACTED_PUBLISHABLE_KEY";
 let mode='signup';const f=document.getElementById('signup'),m=document.getElementById('formmsg');
 const say=(t,ok)=>{m.style.color=ok?'#86efac':'#fca5a5';m.textContent=t};
 document.querySelectorAll('.tabs .tab').forEach(b=>b.addEventListener('click',()=>{mode=b.dataset.mode;
@@ -53,21 +53,40 @@ const when=t=>new Date(t).toLocaleString();
 const row=(a,b,c)=>`<div class="lrow"><div>${a}</div><div class="lm">${b||''}</div><div class="la">${c||''}</div></div>`;
 const empty=t=>`<p class="note">${t}</p>`;
 const CH=['All','Surveys','Apps','Games','Trials','Tasks'];
-document.getElementById('chips').innerHTML=CH.map((n,i)=>`<div class="pill${i?'':' on'}">${n}</div>`).join('');
+/* Generic icons for withdrawal methods (no brand logos) */
+const LOGOS={bank_transfer:'\uD83C\uDFE6',digital_wallet:'\uD83D\uDC5B',gift_card:'\uD83C\uDF81',crypto:'\uD83E\uDE99'};
+/* ---- Offer filters (public + dashboard) ---- */
+let PUB=[],FCAT='All',DOFF=[],DTAKEN=new Set(),DFCAT='All';
+const catIcon=c=>({surveys:'\u25C9',apps:'\u25A3',games:'\uD83C\uDFAE',trials:'\u2726',tasks:'\u2713'}[(c||'').toLowerCase()]||'\u25C7');
+function paintChips(el,cur){if(!el)return;el.innerHTML=CH.map(n=>`<button type="button" class="pill${n===cur?' on':''}" data-cat="${n}">${n}</button>`).join('')}
+function filt(list,cat){return cat==='All'?list:list.filter(o=>(o.category||'').toLowerCase()===cat.toLowerCase())}
+function pubCard(x){return `<article class="card"><div class="thumb">${catIcon(x.category)}</div><span class="tag">${esc(x.category)}</span><h3>${esc(x.title)}</h3><p>${esc(x.description||'')}</p><div class="pts">${x.points} points</div><a class="btn small" href="#account">Sign in to start</a></article>`}
+function drawPub(){const l=filt(PUB,FCAT);document.getElementById('offergrid').innerHTML=l.length?l.map(pubCard).join(''):(PUB.length?empty('No offers in this category yet.'):SLOTS)}
+function drawDoff(){const l=filt(DOFF,DFCAT);document.getElementById('doffers').innerHTML=l.length?l.map(o=>`<article class="card"><div class="thumb">${catIcon(o.category)}</div><span class="tag">${esc(o.category)}</span><h3>${esc(o.title)}</h3><p>${esc(o.description||'')}</p><div class="pts">${o.points} points</div>${DTAKEN.has(o.id)?'<span class="tag">Started</span>':`<button class="btn small" data-claim="${o.id}">Start offer</button>`}</article>`).join(''):empty(DOFF.length?'No offers in this category yet.':'No offers are available yet. Partner offers will appear here.')}
+function wdLogo(){const s=document.getElementById('wdm'),p=document.getElementById('wdlogo');if(s&&p)p.textContent=LOGOS[s.value]||'\u25C7'}
+paintChips(document.getElementById('chips'),FCAT);
+paintChips(document.getElementById('dchips'),DFCAT);
+document.getElementById('chips').addEventListener('click',e=>{const b=e.target.closest('[data-cat]');if(!b)return;FCAT=b.dataset.cat;paintChips(document.getElementById('chips'),FCAT);drawPub()});
+document.getElementById('dchips').addEventListener('click',e=>{const b=e.target.closest('[data-cat]');if(!b)return;DFCAT=b.dataset.cat;paintChips(document.getElementById('dchips'),DFCAT);drawDoff()});
+document.getElementById('wdm').addEventListener('change',wdLogo);
 const SLOTS=Array.from({length:6},()=>`<article class="card slot"><div class="thumb">+</div><span class="tag">Coming soon</span><h3>Partner company</h3><p>Offer details coming soon.</p><div class="pts">-- points</div></article>`).join('');
 document.getElementById('offergrid').innerHTML=SLOTS;
 async function loadPublic(){try{const[o,m,nets]=await Promise.all([api('offers?select=id,title,description,category,points&status=eq.active&order=created_at.desc'),api('withdrawal_methods?select=code,label,min_points&active=eq.true'),api('partners?select=id,name,website,description,network_type,status&active=eq.true&order=name')]);
 window.NETS=nets;document.getElementById('netgrid').innerHTML=nets.map(n=>`<article class="card"><div class="thumb">${esc(n.name.slice(0,2).toUpperCase())}</div><span class="tag">${esc(n.network_type)}</span> <span class="tag">${esc({planned:'Planned',in_contact:'In contact',partner:'Integrated'}[n.status]||'Planned')}</span><h3>${esc(n.name)}</h3><p>${esc(n.description||'')}</p>${n.name==='CPX Research'?`<button class="btn small" data-cpx="1" type="button">Open surveys</button> `:''}${n.website?`<a class="btn small ghost" href="${esc(n.website)}" target="_blank" rel="noopener noreferrer">Visit website</a>`:''}</article>`).join('');
-document.getElementById('offergrid').innerHTML=o.length?o.map(x=>`<article class="card"><div class="thumb">◇</div><span class="tag">${esc(x.category)}</span><h3>${esc(x.title)}</h3><p>${esc(x.description||'')}</p><div class="pts">${x.points} points</div><a class="btn small" href="#account">Sign in to start</a></article>`).join(''):SLOTS;
-document.getElementById('wd').innerHTML=m.map(x=>`<div class="pill"><i>${esc(x.label.slice(0,2).toUpperCase())}</i>${esc(x.label)}<small>from ${x.min_points} points</small></div>`).join('');
-document.getElementById('wdm').innerHTML=m.map(x=>`<option value="${esc(x.code)}">${esc(x.label)} (min ${x.min_points})</option>`).join('')}catch(e){}}
+PUB=o;drawPub();
+const wdm=document.getElementById('wdm');
+document.getElementById('wd').innerHTML=m.length?m.map(x=>`<div class="mcard"><span class="mlogo">${LOGOS[x.code]||'\u25C7'}</span><div class="mtxt"><b>${esc(x.label)}</b><small>from ${Number(x.min_points).toLocaleString()} points</small></div></div>`).join(''):empty('Withdrawal methods are being added.');
+wdm.innerHTML=m.map(x=>`<option value="${esc(x.code)}">${esc(x.label)} (min ${Number(x.min_points).toLocaleString()})</option>`).join('');wdLogo()}catch(e){}}
 async function loadDash(){try{
 const[bal,offers,claims,led,wds]=await Promise.all([rpc('my_balance'),api('offers?select=id,title,description,category,points&status=eq.active'),api('offer_claims?select=*,offers(title,points)&order=created_at.desc'),api('points_ledger?select=*&order=created_at.desc&limit=50'),api('withdrawal_requests?select=*&order=created_at.desc')]);
 document.getElementById('bal').textContent=bal;document.getElementById('dbal').textContent=bal;
 document.getElementById('balnote').textContent='Signed in as '+S.u+'. Your balance is '+bal+' points.';
 document.getElementById('dwho').textContent='Signed in as '+S.u;
 const taken=new Set(claims.map(c=>c.offer_id));
-document.getElementById('doffers').innerHTML=offers.length?offers.map(o=>`<article class="card"><span class="tag">${esc(o.category)}</span><h3>${esc(o.title)}</h3><p>${esc(o.description||'')}</p><div class="pts">${o.points} points</div>${taken.has(o.id)?'<span class="tag">Started</span>':`<button class="btn small" data-claim="${o.id}">Start offer</button>`}</article>`).join(''):empty('No offers are available yet. Partner offers will appear here.');
+DOFF=offers;DTAKEN=taken;paintChips(document.getElementById('dchips'),DFCAT);drawDoff();
+document.getElementById('sbal').textContent=bal;
+document.getElementById('soff').textContent=claims.length;
+document.getElementById('swd').textContent=wds.filter(w=>['requested','under_review','approved'].includes(w.status)).length;
 document.getElementById('dclaims').innerHTML=claims.length?claims.map(c=>row(esc(c.offers?c.offers.title:'Offer'),badge(c.status)+' '+esc(c.admin_note||''),c.status==='pending'?`<button class="btn small" data-submit="${c.id}">Mark completed</button>`:when(c.updated_at))).join(''):empty('You have not started any offers.');
 document.getElementById('dledger').innerHTML=led.length?led.map(l=>row((l.delta>0?'+':'')+l.delta+' points',esc(l.reason.replace(/_/g,' ')),when(l.created_at))).join(''):empty('No points yet.');
 document.getElementById('dwd').innerHTML=wds.length?wds.map(w=>row(w.points+' points via '+esc(w.method_code.replace(/_/g,' ')),badge(w.status)+' '+esc(w.admin_note||''),w.status==='requested'?`<button class="btn small ghost" data-cancel="${w.id}">Cancel</button>`:when(w.updated_at))).join(''):empty('No withdrawal requests yet.');
