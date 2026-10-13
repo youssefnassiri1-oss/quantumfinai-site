@@ -27,7 +27,9 @@ function askNote(title = "Add a note (optional)") {
     const inp = document.getElementById('modal-input');
     document.getElementById('modal-title').textContent = title;
     inp.value = '';
-    const close = val => { dlg.close(); resolve(val); };
+    let done = false;
+    const close = val => { if (done) return; done = true; if (dlg.open) dlg.close(); resolve(val); };
+    dlg.addEventListener('close', () => close(null), { once: true });
     document.getElementById('modal-cancel').onclick = () => close(null);
     document.getElementById('modal-form').onsubmit = e => { e.preventDefault(); close(inp.value.trim()); };
     dlg.showModal();
@@ -42,7 +44,11 @@ function tsRender(id) {
 }
 const tsToken = id => (window.turnstile && TSW[id] !== undefined) ? turnstile.getResponse(TSW[id]) : '';
 const tsReset = id => { if (window.turnstile && TSW[id] !== undefined) turnstile.reset(TSW[id]); };
-const tsWait = setInterval(() => { if (window.turnstile) { clearInterval(tsWait); tsRender('tsauth'); } }, 300);
+let tsTries = 0;
+const tsWait = setInterval(() => {
+  if (window.turnstile) { clearInterval(tsWait); tsRender('tsauth'); }
+  else if (++tsTries > 60) clearInterval(tsWait);
+}, 300);
 
 let S = JSON.parse(localStorage.getItem('qf_s') || 'null');
 let ADMIN = false;
@@ -66,14 +72,20 @@ async function sb(path, body) {
   return [r, await r.json().catch(() => ({}))];
 }
 
+let refreshProm = null;
 async function tok() {
   if (!S) return null;
-  if (Date.now() > S.e) {
-    const [r, d] = await sb('/auth/v1/token?grant_type=refresh_token', { refresh_token: S.r });
-    if (!r.ok) { signOut(); return null; }
-    setSess(d);
+  if (Date.now() <= S.e) return S.a;
+  if (!refreshProm) {
+    refreshProm = sb('/auth/v1/token?grant_type=refresh_token', { refresh_token: S.r })
+      .then(([r, d]) => {
+        refreshProm = null;
+        if (!r.ok) { signOut(); return null; }
+        setSess(d);
+        return S.a;
+      }, () => { refreshProm = null; return null; });
   }
-  return S.a;
+  return refreshProm;
 }
 
 async function api(path, method = 'GET', body) {
@@ -247,10 +259,10 @@ async function loadDash() {
     const bal = prof ? prof.balance : await rpc('my_balance');
     const totalEarned = prof ? prof.total_earned : led.filter(x => x.delta > 0).reduce((s, x) => s + x.delta, 0);
 
-    document.getElementById('sbal').textContent = Number(bal).toLocaleString();
-    document.getElementById('nav-bal').textContent = Number(bal).toLocaleString();
+    animateValue(document.getElementById('sbal'), Number(bal));
+    animateValue(document.getElementById('nav-bal'), Number(bal));
     document.getElementById('sbal-usd').textContent = `≈ $${(bal / 1000).toFixed(2)} USD`;
-    document.getElementById('stotal').textContent = Number(totalEarned).toLocaleString();
+    animateValue(document.getElementById('stotal'), Number(totalEarned));
     document.getElementById('soff').textContent = claims.length;
     document.getElementById('swd').textContent = wds.filter(w => ['requested', 'under_review', 'approved'].includes(w.status)).length;
 
@@ -372,7 +384,7 @@ async function openCpxWall() {
     const f = document.createElement('iframe');
     f.src = d.url;
     f.title = 'CPX Research Offerwall';
-    f.style.cssText = 'width:100%;height:920px;border:0;background:#fff;display:block';
+    f.style.cssText = 'width:100%;height:calc(100dvh - 130px);min-height:560px;border:0;background:#fff;display:block';
     wrap.replaceChildren(f);
   } catch (e) {
     wrap.innerHTML = `<p class="note" style="padding:24px;color:#fca5a5">${esc(e.message)}</p>`;
@@ -550,6 +562,7 @@ function fpParts() {
   try {
     const c = document.createElement('canvas'), g = c.getContext('webgl'), e = g && g.getExtension('WEBGL_debug_renderer_info');
     gpu = e ? String(g.getParameter(e.UNMASKED_RENDERER_WEBGL)).slice(0, 80) : '';
+    const lc = g && g.getExtension('WEBGL_lose_context'); if (lc) lc.loseContext();
   } catch (_) {}
   return {
     screen: screen.width + 'x' + screen.height + 'x' + (window.devicePixelRatio || 1),
@@ -592,3 +605,73 @@ async function sendVerify() {
 
 loadPublic();
 if (S) enter();
+
+
+/* ---- motion polish (all respect prefers-reduced-motion) ---- */
+function animateValue(el, endVal, duration = 800) {
+  if (!el) return;
+  const startVal = parseFloat(el.dataset.val || '0') || 0;
+  el.dataset.val = endVal;
+  const fmt = v => Math.round(v).toLocaleString();
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches || startVal === endVal) { el.textContent = fmt(endVal); return; }
+  const t0 = performance.now();
+  (function tick(now) {
+    const p = Math.min((now - t0) / duration, 1);
+    el.textContent = fmt(startVal + (endVal - startVal) * (1 - Math.pow(1 - p, 3)));
+    if (p < 1) requestAnimationFrame(tick);
+  })(t0);
+}
+
+(function initHeroCanvas() {
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const canvas = document.getElementById('hero-canvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const hero = canvas.parentElement;
+  let w = 0, h = 0, parts = [], raf = 0, vis = true;
+  const m = { x: -9999, y: -9999 };
+  function resize() {
+    const r = hero.getBoundingClientRect(), dpr = Math.min(devicePixelRatio || 1, 2);
+    w = r.width; h = r.height;
+    canvas.width = w * dpr; canvas.height = h * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const n = Math.min(45, Math.floor(w * h / 18000));
+    parts = Array.from({ length: n }, () => ({ x: Math.random() * w, y: Math.random() * h, vx: (Math.random() - .5) * .45, vy: (Math.random() - .5) * .45, r: Math.random() * 1.8 + 1, g: Math.random() < .22 }));
+  }
+  function step() {
+    if (!vis) return;
+    ctx.clearRect(0, 0, w, h);
+    for (let i = 0; i < parts.length; i++) {
+      const p = parts[i];
+      p.x += p.vx; p.y += p.vy;
+      if (p.x < 0 || p.x > w) p.vx *= -1;
+      if (p.y < 0 || p.y > h) p.vy *= -1;
+      ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, 6.2832);
+      ctx.fillStyle = p.g ? '#f0b90b' : '#22d3ee'; ctx.fill();
+      for (let j = i + 1; j < parts.length; j++) {
+        const q = parts[j], d = Math.hypot(p.x - q.x, p.y - q.y);
+        if (d < 130) { ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(q.x, q.y); ctx.strokeStyle = `rgba(79,140,255,${(1 - d / 130) * .28})`; ctx.lineWidth = 1; ctx.stroke(); }
+      }
+      const md = Math.hypot(p.x - m.x, p.y - m.y);
+      if (md < 160) { ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(m.x, m.y); ctx.strokeStyle = `rgba(34,211,238,${(1 - md / 160) * .5})`; ctx.stroke(); }
+    }
+    raf = requestAnimationFrame(step);
+  }
+  hero.addEventListener('pointermove', e => { const r = canvas.getBoundingClientRect(); m.x = e.clientX - r.left; m.y = e.clientY - r.top; }, { passive: true });
+  hero.addEventListener('pointerleave', () => { m.x = m.y = -9999; });
+  new IntersectionObserver(([en]) => { vis = en.isIntersecting; cancelAnimationFrame(raf); if (vis) raf = requestAnimationFrame(step); }).observe(hero);
+  addEventListener('resize', resize, { passive: true });
+  resize(); step();
+})();
+
+(function initSpotlight() {
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches || !matchMedia('(hover: hover)').matches) return;
+  const sel = '.card, .wall-card, .mcard, .dstat';
+  document.addEventListener('pointermove', e => {
+    const c = e.target.closest && e.target.closest(sel);
+    if (!c) return;
+    const r = c.getBoundingClientRect();
+    c.style.setProperty('--mx', (e.clientX - r.left) + 'px');
+    c.style.setProperty('--my', (e.clientY - r.top) + 'px');
+  }, { passive: true });
+})();
