@@ -198,3 +198,11 @@ button.mcard{font:inherit;color:inherit;text-align:left;width:100%;cursor:pointe
 
 
 @media(max-width:600px){.dstats{grid-template-columns:1fr 1fr!important;gap:10px}.dstat{padding:14px}.dstat b{font-size:22px}}
+
+#hero-canvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:0;opacity:.75}
+.hero>*:not(canvas){position:relative;z-index:1}
+.card,.wall-card,.mcard,.dstat{position:relative;--mx:50%;--my:50%}
+.card::before,.wall-card::before,.mcard::before,.dstat::before{content:"";position:absolute;inset:0;border-radius:inherit;background:radial-gradient(420px circle at var(--mx) var(--my),rgba(34,211,238,.12),transparent 45%);opacity:0;transition:opacity .3s;pointer-events:none}
+.card:hover::before,.wall-card:hover::before,.mcard:hover::before,.dstat:hover::before{opacity:1}
+@media(max-width:720px){#dash .dtabs{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;padding-bottom:4px}#dash .dtabs::-webkit-scrollbar{display:none}}
+@media(prefers-reduced-motion:reduce){#hero-canvas{display:none}}
