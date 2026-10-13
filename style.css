@@ -195,3 +195,6 @@ button.mcard{font:inherit;color:inherit;text-align:left;width:100%;cursor:pointe
 .modal{background:var(--card);color:var(--tx);border:1px solid var(--a);border-radius:18px;padding:24px;width:min(420px,92vw);box-shadow:0 24px 60px rgba(0,0,0,.6)}
 .modal::backdrop{background:rgba(6,10,22,.75);backdrop-filter:blur(4px)}
 
+
+
+@media(max-width:600px){.dstats{grid-template-columns:1fr 1fr!important;gap:10px}.dstat{padding:14px}.dstat b{font-size:22px}}
