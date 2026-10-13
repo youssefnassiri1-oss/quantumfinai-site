@@ -3,11 +3,28 @@
 <head>
 <meta charset="utf-8">
 <meta name="theme-color" content="#0b1020">
-<meta property="og:title" content="QuantumFinAI | Complete offers, earn points">
-<meta property="og:description" content="Complete offers from partner companies and collect points.">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>QuantumFinAI | Complete offers, earn points</title>
-<meta name="description" content="QuantumFinAI: complete offers from partner companies and earn points. Plus finance, training and AI products.">
+<title>QuantumFinAI | Complete offers and surveys, earn points</title>
+<meta name="description" content="Create a free account, complete offers and surveys from partner companies and collect points. Withdrawals are reviewed before approval. Earnings are not guaranteed.">
+<meta name="robots" content="index,follow,max-image-preview:large">
+<link rel="canonical" href="https://quantumfinai.me/">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="QuantumFinAI">
+<meta property="og:url" content="https://quantumfinai.me/">
+<meta property="og:title" content="QuantumFinAI | Complete offers and surveys, earn points">
+<meta property="og:description" content="Create a free account, complete offers and surveys from partner companies and collect points. Withdrawals are reviewed before approval. Earnings are not guaranteed.">
+<meta property="og:image" content="https://quantumfinai.me/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="QuantumFinAI: complete offers and surveys, earn points">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="QuantumFinAI | Complete offers and surveys, earn points">
+<meta name="twitter:description" content="Create a free account, complete offers and surveys from partner companies and collect points. Withdrawals are reviewed before approval. Earnings are not guaranteed.">
+<meta name="twitter:image" content="https://quantumfinai.me/og-image.png">
+<link rel="preconnect" href="https://rofcjlvxzctevqjzgvyt.supabase.co" crossorigin>
+<link rel="preconnect" href="https://challenges.cloudflare.com" crossorigin>
+<script type="application/ld+json">[{"@context":"https://schema.org","@type":"Organization","name":"QuantumFinAI","url":"https://quantumfinai.me/","logo":"https://quantumfinai.me/favicon.svg"},{"@context":"https://schema.org","@type":"WebSite","name":"QuantumFinAI","url":"https://quantumfinai.me/","inLanguage":"en"},{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"Can I withdraw money today?","acceptedAnswer":{"@type":"Answer","text":"You can submit a withdrawal request once you have enough points. Each request is reviewed before approval and you can follow its status in your account."}},{"@type":"Question","name":"How do surveys work?","acceptedAnswer":{"@type":"Answer","text":"Signed-in members can open surveys from CPX Research, an independent survey network. Points are added after CPX confirms a completed survey. Availability and amounts vary and are not guaranteed."}},{"@type":"Question","name":"Are the listed networks partners?","acceptedAnswer":{"@type":"Answer","text":"No. The networks listed on this site are independent companies. We are not affiliated with them and no partnership is in place yet."}},{"@type":"Question","name":"How do you prevent abuse?","acceptedAnswer":{"@type":"Answer","text":"One claim per offer per account, minimum completion times, rate limits, duplicate-account checks, a manual review queue and an audit log. Accounts can be placed under review or blocked."}},{"@type":"Question","name":"What data do you keep?","acceptedAnswer":{"@type":"Answer","text":"Your name and email, for your account only. It is never sold or shared. We never ask for banking details."}}]}]</script>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -115,7 +132,7 @@
 <section id="dash" hidden>
   <h2>My account</h2>
   <div class="dtabs" id="dtabs"><button class="tab on" data-t="d-offers">Offers</button><button class="tab" data-t="d-rewards">Points</button><button class="tab" data-t="d-wd">Withdrawals</button><button class="tab" data-t="d-admin" id="tabadmin" hidden>Admin</button><button class="tab" id="signout">Sign out</button></div>
-  <div class="dpane" id="d-offers"><div class="note" id="dwho"></div><h3 class="sh">Available offers</h3><div class="formbox" style="max-width:420px;margin:0 0 18px"><p class="note" style="margin:0 0 10px">Quick human check before you start an offer.</p><div id="tshuman" class="ts"></div></div><div class="grid" id="doffers"></div><h3 class="sh">My offers</h3><div class="list" id="dclaims"></div></div>
+  <div class="dpane" id="d-offers"><div class="note" id="dwho"></div><h3 class="sh">Surveys</h3><div class="formbox" style="max-width:520px;margin:0 0 18px"><p class="note" style="margin:0 0 10px">Surveys come from CPX Research, an independent survey network. Points are added after CPX confirms a completed survey. Availability and amounts vary and are not guaranteed.</p><button class="btn" id="svbtn" type="button">Open surveys</button><p class="note" id="svmsg" aria-live="polite"></p></div><div id="svwrap"></div><h3 class="sh">Available offers</h3><div class="formbox" style="max-width:420px;margin:0 0 18px"><p class="note" style="margin:0 0 10px">Quick human check before you start an offer.</p><div id="tshuman" class="ts"></div></div><div class="grid" id="doffers"></div><h3 class="sh">My offers</h3><div class="list" id="dclaims"></div></div>
   <div class="dpane" id="d-rewards" hidden><div class="bal"><span id="dbal">0</span> <small>points</small></div><h3 class="sh">History</h3><div class="list" id="dledger"></div></div>
   <div class="dpane" id="d-wd" hidden>
     <form id="wdform" class="formbox" style="max-width:520px;margin:0 0 24px"><h3 style="margin:0">Request a withdrawal</h3>
@@ -129,7 +146,7 @@
     <h3 class="sh">Withdrawal requests</h3><div class="list" id="awd"></div>
     <h3 class="sh">Fraud flags</h3><div class="list" id="aflags"></div>
     <h3 class="sh">Users under review or blocked</h3><div class="list" id="ausers"></div>
-    <h3 class="sh">Network confirmation log</h3><p class="note">Confirmations are recorded here by an admin. Each transaction ID can be recorded once. There is no automatic receiver yet.</p><div class="list" id="apb"></div>
+    <h3 class="sh">Network confirmation log</h3><p class="note">Confirmations are recorded here by an admin. Each transaction ID can be recorded once. CPX Research confirmations are received automatically and also appear here. Confirmations from other networks are recorded by an admin.</p><div class="list" id="apb"></div>
     <form id="pbform" class="formbox" style="max-width:520px;margin:12px 0 24px"><label>Network<select name="n" id="pbn"></select></label><label>Transaction ID<input name="x" required maxlength="120"></label>
       <label>Type<select name="t"><option>conversion</option><option>reversal</option></select></label><label>Claim ID (optional)<input name="c" maxlength="40"></label><label>Points<input name="p" type="number" min="0"></label>
       <label><input type="checkbox" name="s"> Signature verified by the network</label><button class="btn" type="submit">Record confirmation</button><p class="note" id="pbmsg" aria-live="polite"></p></form>
@@ -147,6 +164,7 @@
   <h2>FAQ</h2>
   <div class="faq">
     <details><summary>Can I withdraw money today?</summary><p>You can submit a withdrawal request once you have enough points. Each request is reviewed before approval and you can follow its status in your account.</p></details>
+    <details><summary>How do surveys work?</summary><p>Signed-in members can open surveys from CPX Research, an independent survey network. Points are added after CPX confirms a completed survey. Availability and amounts vary and are not guaranteed.</p></details>
     <details><summary>Are the listed networks partners?</summary><p>No. The networks listed on this site are independent companies. We are not affiliated with them and no partnership is in place yet.</p></details>
     <details><summary>How do you prevent abuse?</summary><p>One claim per offer per account, minimum completion times, rate limits, duplicate-account checks, a manual review queue and an audit log. Accounts can be placed under review or blocked.</p></details>
     <details><summary>What data do you keep?</summary><p>Your name and email, for your account only. It is never sold or shared. We never ask for banking details.</p></details>
