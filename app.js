@@ -142,14 +142,6 @@ authForm.addEventListener('submit', async e => {
 });
 
 const LOGOS = { bank_transfer: '🏦', digital_wallet: '👛', gift_card: '🎁', crypto: '🪙' };
-const BRANDS={
-binance:`<svg viewBox="0 0 32 32" aria-hidden="true"><g fill="#F0B90B"><rect x="13.2" y="13.2" width="5.6" height="5.6"/><rect x="13.2" y="4.5" width="5.6" height="5.6"/><rect x="13.2" y="21.9" width="5.6" height="5.6"/><rect x="4.5" y="13.2" width="5.6" height="5.6"/><rect x="21.9" y="13.2" width="5.6" height="5.6"/></g></svg>`,
-cwallet:`<svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="#00C48C"/><text x="16" y="22.5" text-anchor="middle" font-family="Arial,sans-serif" font-size="16" font-weight="800" fill="#fff">C</text></svg>`,
-paypal:`<svg viewBox="0 0 32 32" aria-hidden="true"><text x="4" y="24" font-family="Arial,sans-serif" font-size="19" font-weight="800" font-style="italic" fill="#003087">P</text><text x="14.5" y="24" font-family="Arial,sans-serif" font-size="19" font-weight="800" font-style="italic" fill="#009CDE">P</text></svg>`,
-itunes:`<svg viewBox="0 0 32 32" aria-hidden="true"><defs><linearGradient id="qfit" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FA57A0"/><stop offset="1" stop-color="#FA243C"/></linearGradient></defs><rect width="32" height="32" rx="8" fill="url(#qfit)"/><text x="16" y="23.5" text-anchor="middle" font-size="17" fill="#fff">\u266A</text></svg>`,
-googleplay:`<svg viewBox="0 0 32 32" aria-hidden="true"><defs><linearGradient id="qfgp" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#00A0FF"/><stop offset=".5" stop-color="#00D563"/><stop offset=".75" stop-color="#FFCE00"/><stop offset="1" stop-color="#FF3A44"/></linearGradient></defs><path d="M9 5.5v21l15-10.5z" fill="url(#qfgp)"/></svg>`,
-amazon:`<svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="#232F3E"/><text x="16" y="20" text-anchor="middle" font-family="Arial,sans-serif" font-size="15" font-weight="800" fill="#fff">a</text><path d="M8 22.5q8 4.5 16-1.5" stroke="#FF9900" stroke-width="2" fill="none" stroke-linecap="round"/></svg>`
-};
 const BRAND_LIST = [
   ['binance', 'Binance', 'Crypto USDT'],
   ['cwallet', 'Cwallet', 'Crypto Wallet'],
@@ -163,16 +155,16 @@ function drawBrands() {
   const el = document.getElementById('wd');
   if (!el) return;
   el.innerHTML = BRAND_LIST.map(b => `
-    <button type="button" class="mcard soon" data-toast="Not available yet - coming soon.">
-      <span class="mlogo">${BRANDS[b[0]]}</span>
+    <button type="button" class="mcard soon" data-toast="Payouts are unlocking soon.">
+      <span class="mlogo">💳</span>
       <div class="mtxt"><b>${b[1]}</b><small>${b[2]}</small></div>
-      <span class="tag">Coming soon</span>
+      <span class="tag">Soon</span>
     </button>`).join('');
 }
 
 let DOFF = [], DTAKEN = new Set(), DFCAT = 'All';
-const CH = ['All', 'Surveys', 'Offerwalls', 'Games', 'Apps', 'Trials', 'Tasks', 'Services'];
-const catIcon = c => ({ surveys: '◉', apps: '▣', games: '🎮', offerwalls: '★', services: '⚙', trials: '✦', tasks: '✓' }[(c || '').toLowerCase()] || '◇');
+const CH = ['All', 'Surveys', 'Apps', 'Games', 'Trials', 'Tasks'];
+const catIcon = c => ({ surveys: '◉', apps: '▣', games: '🎮', trials: '✦', tasks: '✓' }[(c || '').toLowerCase()] || '◇');
 
 function paintChips(el, cur) {
   if (!el) return;
@@ -214,7 +206,7 @@ function drawDoff() {
         <div class="pts">${o.points.toLocaleString()} pts</div>
         ${DTAKEN.has(o.id) ? '<span class="tag">In Progress</span>' : `<button class="btn small" data-claim="${o.id}">Start Task</button>`}
       </article>`).join('')
-    : empty(DFCAT === 'All' ? 'No direct tasks right now. Use the Offerwalls above to earn!' : 'No ' + DFCAT.toLowerCase() + ' yet.');
+    : empty('No direct tasks in this category right now. Use the Offerwalls above to earn!');
 }
 
 document.getElementById('dchips').addEventListener('click', e => {
@@ -225,40 +217,14 @@ document.getElementById('dchips').addEventListener('click', e => {
   drawDoff();
 });
 
-
-/* ---- Public offers + networks by category (guest view) ---- */
-let PUB = [], FCAT = 'All';
-function ncat(n) { const t = (n.network_type || '').toLowerCase(); if (t === 'survey') return 'Surveys'; if (t === 'offerwall') return 'Offerwalls'; if (/game/i.test(n.name)) return 'Games'; return 'Services'; }
-function netCard(n) {
-  return `<article class="card"><div class="thumb">${esc(n.name.slice(0, 2).toUpperCase())}</div><span class="tag">${esc(n.category || ncat(n))}</span> <span class="tag">${esc({ planned: 'Planned', in_contact: 'In contact', partner: 'Integrated' }[n.status] || 'Planned')}</span><h3>${esc(n.name)}</h3><p>${esc(n.description || '')}</p>${n.name === 'CPX Research' ? '<a class="btn small" href="#account">Sign in to open surveys</a> ' : ''}${n.website ? `<a class="btn small ghost" href="${esc(n.website)}" target="_blank" rel="noopener noreferrer">Visit website</a>` : ''}</article>`;
-}
-function pubCard(x) { return `<article class="card"><div class="thumb">${catIcon(x.category)}</div><span class="tag">${esc(x.category)}</span><h3>${esc(x.title)}</h3><p>${esc(x.description || '')}</p><div class="pts">${Number(x.points).toLocaleString()} points</div><a class="btn small" href="#account">Sign in to start</a></article>`; }
-function drawPub() {
-  const el = document.getElementById('offergrid'); if (!el) return;
-  const l = FCAT === 'All' ? PUB : PUB.filter(o => (o.category || '').toLowerCase() === FCAT.toLowerCase());
-  el.innerHTML = l.length ? l.map(x => x.isNet ? netCard(x) : pubCard(x)).join('') : empty(FCAT === 'All' ? 'Nothing here yet.' : 'No ' + FCAT.toLowerCase() + ' yet.');
-}
-const pubChips = document.getElementById('chips');
-if (pubChips) {
-  paintChips(pubChips, FCAT);
-  pubChips.addEventListener('click', e => { const b = e.target.closest('[data-cat]'); if (!b) return; FCAT = b.dataset.cat; paintChips(pubChips, FCAT); drawPub(); });
-}
-function drawPublicNets(nets) {
-  const g = document.getElementById('netgrid');
-  if (g) g.innerHTML = nets.map(n => netCard(Object.assign({}, n, { category: n.network_type }))).join('');
-}
-
 async function loadPublic() {
   drawBrands();
   try {
-    const [m, nets, offs] = await Promise.all([
+    const [m, nets] = await Promise.all([
       api('withdrawal_methods?select=code,label,min_points&active=eq.true'),
-      api('partners?select=id,name,website,description,network_type,status&active=eq.true&order=name'),
-      api('offers?select=id,title,description,category,points&status=eq.active&order=created_at.desc')
+      api('partners?select=id,name,website,description,network_type,status&active=eq.true&order=name')
     ]);
     window.NETS = nets || [];
-    PUB = (offs || []).concat(window.NETS.map(n => Object.assign({}, n, { category: ncat(n), isNet: true })));
-    drawPub(); drawPublicNets(window.NETS);
     drawWallPartners(window.NETS);
     const wdm = document.getElementById('wdm');
     if (wdm) {
