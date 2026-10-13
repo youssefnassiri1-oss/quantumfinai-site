@@ -156,3 +156,6 @@ button.pill{font:inherit;color:inherit;cursor:pointer}
 @media (prefers-reduced-motion:reduce){.coins{display:none}}
 
 .mcard.soon{opacity:.72;filter:saturate(.7)}.mcard.soon:hover{transform:none;box-shadow:none;border-color:#232d55}.mcard .tag{margin-left:auto;white-space:nowrap}
+button.mcard{font:inherit;color:inherit;text-align:left;width:100%;cursor:pointer}
+.mcard .mlogo svg{width:30px;height:30px;display:block}
+.mcard.soon:active{transform:scale(.98)}
