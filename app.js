@@ -689,8 +689,8 @@ function sndLoadOnce() {
   if (sndLoad) return sndLoad;
   sndLoad = new Promise(res => {
     const s = document.createElement('script');
-    s.src = 'sounds.js?v=20261014e';
-    s.onload = () => { for (const k in window.QF_SOUNDS) { const a = new Audio(window.QF_SOUNDS[k]); a.preload = 'auto'; a.volume = k === 'click' ? .45 : .55; sndPool[k] = a; } sndReady = true; res(); };
+    s.src = 'sounds.js?v=20261014f';
+    s.onload = () => { for (const k in window.QF_SOUNDS) { const a = new Audio(window.QF_SOUNDS[k]); a.preload = 'auto'; a.volume = k === 'click' ? .35 : .45; sndPool[k] = a; } sndReady = true; res(); };
     s.onerror = () => res();
     document.head.appendChild(s);
   });
