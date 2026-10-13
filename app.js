@@ -16,7 +16,7 @@ document.querySelectorAll('.tabs .tab').forEach(x=>x.classList.toggle('on',x===b
 document.getElementById('lname').style.display=mode==='signup'?'':'none';
 document.getElementById('fsubmit').textContent=mode==='signup'?'Create account':'Sign in';
 document.getElementById('ftitle').textContent=mode==='signup'?'Create an account':'Sign in';
-f.pw.autocomplete=mode==='signup'?'new-password':'current-password'}));
+f.pw.autocomplete=mode==='signup'?'new-password':'current-password';tsReset('tsauth')}));
 function showUser(email){if(!email)return;const w=document.getElementById('who');w.hidden=false;w.textContent='✓ Signed in as '+email;document.getElementById('balnote').textContent='Signed in as '+email+'. Your balance is 0 points. No offers are live yet.';}
 async function sb(path,body){const r=await fetch(SB_URL+path,{method:'POST',headers:{apikey:SB_KEY,'Content-Type':'application/json'},body:JSON.stringify(body)});return[r,await r.json().catch(()=>({}))]}
 f.addEventListener('submit',async e=>{e.preventDefault();
@@ -28,7 +28,8 @@ try{if(mode==='signup'){const[r,d]=await sb('/auth/v1/signup',{email:f.email.val
 if(!r.ok)throw d;say('✓ Account created. Check your email to confirm, then sign in.',true)}
 else{const[r,d]=await sb('/auth/v1/token?grant_type=password',{email:f.email.value,password:f.pw.value,gotrue_meta_security:{captcha_token:cap}});
 if(!r.ok)throw d;say('✓ Welcome back',true);setSess(d);enter()}}
-catch(x){tsReset('tsauth');say(x&&x.msg?(x.msg.includes('Invalid login')?'Wrong email or password':x.msg):'Could not connect, try again later')}});
+catch(x){let t=(x&&(x.msg||x.message))||'';say(!t?'Could not connect, try again later':/Invalid login/i.test(t)?'Wrong email or password':/not confirmed/i.test(t)?'Please confirm your email first (check your inbox and spam folder), then sign in.':/captcha/i.test(t)?'The human check expired. Please complete it again and retry.':t)}
+finally{tsReset('tsauth')}});
 
 document.documentElement.classList.add('js');
 const rv=[...document.querySelectorAll('section:not(.hero) h2,.card,.pill,.cardbox,.formbox,.sh,.faq details,.stats div')];
