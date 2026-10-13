@@ -25,7 +25,7 @@
 <link rel="preconnect" href="https://rofcjlvxzctevqjzgvyt.supabase.co" crossorigin>
 <link rel="preconnect" href="https://challenges.cloudflare.com" crossorigin>
 <script type="application/ld+json">[{"@context":"https://schema.org","@type":"Organization","name":"QuantumFinAI","url":"https://quantumfinai.me/","logo":"https://quantumfinai.me/favicon.svg"},{"@context":"https://schema.org","@type":"WebSite","name":"QuantumFinAI","url":"https://quantumfinai.me/","inLanguage":"en"},{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"Can I withdraw money today?","acceptedAnswer":{"@type":"Answer","text":"You can submit a withdrawal request once you have enough points. Each request is reviewed before approval and you can follow its status in your account."}},{"@type":"Question","name":"How do surveys work?","acceptedAnswer":{"@type":"Answer","text":"Signed-in members can open surveys from CPX Research, an independent survey network. Points are added after CPX confirms a completed survey. Availability and amounts vary and are not guaranteed."}},{"@type":"Question","name":"Are the listed networks partners?","acceptedAnswer":{"@type":"Answer","text":"No. The networks listed on this site are independent companies. We are not affiliated with them and no partnership is in place yet."}},{"@type":"Question","name":"How do you prevent abuse?","acceptedAnswer":{"@type":"Answer","text":"One claim per offer per account, minimum completion times, rate limits, duplicate-account checks, a manual review queue and an audit log. Accounts can be placed under review or blocked."}},{"@type":"Question","name":"What data do you keep?","acceptedAnswer":{"@type":"Answer","text":"Your name and email, for your account only. It is never sold or shared. We never ask for banking details."}}]}]</script>
-<link rel="stylesheet" href="style.css?v=20261013d">
+<link rel="stylesheet" href="style.css?v=20261013e">
 </head>
 <body>
 <header class="nav">
@@ -44,6 +44,7 @@
 
 <main id="top">
 <section class="hero">
+  <div class="coins" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div>
   <div class="badge">Offers · Points · Rewards</div>
   <h1>Complete offers, <span class="grad">earn points</span></h1>
   <p class="sub">Create a free account, then open the Surveys tab to take surveys from CPX Research and collect points. More partner offers are being added.</p>
@@ -110,7 +111,7 @@
 <section id="payments" class="alt">
   <h2>Withdrawals</h2>
   <p class="note" style="margin:-14px 0 22px">Withdrawal requests are reviewed before approval. Choose a method, request an amount and follow the status of your request.</p>
-  <div class="pills" id="wd"></div>
+  <div class="mcards" id="wd"></div>
 </section>
 
 <section id="partners">
@@ -131,14 +132,19 @@
 
 <section id="dash" hidden>
   <h2>My account</h2>
+  <div class="dstats">
+    <div class="dstat"><span>Balance</span><b><i id="sbal">0</i> pts</b></div>
+    <div class="dstat"><span>Offers started</span><b id="soff">0</b></div>
+    <div class="dstat"><span>Pending withdrawals</span><b id="swd">0</b></div>
+  </div>
   <div class="dtabs" id="dtabs"><button class="tab on" data-t="d-surveys">Surveys</button><button class="tab" data-t="d-offers">Offerwall</button><button class="tab" data-t="d-profile">Profile</button><button class="tab" data-t="d-rewards">Points</button><button class="tab" data-t="d-wd">Withdrawals</button><button class="tab" data-t="d-admin" id="tabadmin" hidden>Admin</button><button class="tab" id="signout">Sign out</button></div>
   <div class="dpane" id="d-surveys"><h3 class="sh">Surveys</h3><div class="formbox" style="max-width:520px;margin:0 0 18px"><p class="note" style="margin:0 0 10px">Surveys come from CPX Research, an independent survey network. Points are added after CPX confirms a completed survey. Availability and amounts vary and are not guaranteed.</p><button class="btn" id="svbtn" type="button">Open surveys</button><p class="note" id="svmsg" aria-live="polite"></p></div><div id="svwrap"></div></div>
   <div class="dpane" id="d-profile" hidden><div class="formbox" style="max-width:520px;margin:0 0 18px"><h3 style="margin:0 0 10px">My profile</h3><p id="pname" class="note"></p><p id="pemail" class="note"></p><p id="vmsg" class="note" aria-live="polite"></p><button class="btn" id="signout2" type="button">Sign out</button></div></div>
-  <div class="dpane" id="d-offers" hidden><div class="note" id="dwho"></div><h3 class="sh">Offerwall: available offers</h3><p class="note">Offerwall partners are still being added. Surveys are available now in the Surveys tab.</p><div class="formbox" style="max-width:420px;margin:0 0 18px"><p class="note" style="margin:0 0 10px">Quick human check before you start an offer.</p><div id="tshuman" class="ts"></div></div><div class="grid" id="doffers"></div><h3 class="sh">My offers</h3><div class="list" id="dclaims"></div></div>
+  <div class="dpane" id="d-offers" hidden><div class="note" id="dwho"></div><h3 class="sh">Offerwall: available offers</h3><div class="pills chips" id="dchips" style="margin-bottom:18px"></div><p class="note">Offerwall partners are still being added. Surveys are available now in the Surveys tab.</p><div class="formbox" style="max-width:420px;margin:0 0 18px"><p class="note" style="margin:0 0 10px">Quick human check before you start an offer.</p><div id="tshuman" class="ts"></div></div><div class="grid" id="doffers"></div><h3 class="sh">My offers</h3><div class="list" id="dclaims"></div></div>
   <div class="dpane" id="d-rewards" hidden><div class="bal"><span id="dbal">0</span> <small>points</small></div><h3 class="sh">History</h3><div class="list" id="dledger"></div></div>
   <div class="dpane" id="d-wd" hidden>
     <form id="wdform" class="formbox" style="max-width:520px;margin:0 0 24px"><h3 style="margin:0">Request a withdrawal</h3>
-      <label>Method<select name="m" id="wdm"></select></label>
+      <label>Method<div class="wdpick"><span class="mlogo" id="wdlogo"></span><select name="m" id="wdm"></select></div></label>
       <label>Points<input name="p" type="number" min="1" step="1" required></label>
       <label>Payout details<input name="d" maxlength="200" required placeholder="Account or address for this method"></label>
       <button class="btn" type="submit">Send request</button><p class="note" id="wdmsg" aria-live="polite">Requests are reviewed before approval. Do not enter card numbers or passwords.</p></form>
@@ -193,6 +199,6 @@
 <footer><div class="fl"><a href="#how">How it works</a><a href="#offers">Offers</a><a href="#networks">Networks</a><a href="#trust">Protection</a><a href="#partners">Partners</a><a href="#faq">FAQ</a><a href="mailto:youssef@quantumfinai.me">Contact</a></div>© 2026 QuantumFinAI · quantumfinai.me · </footer>
 <div id="toast" role="status"></div>
 <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
-<script src="app.js?v=20261013d"></script>
+<script src="app.js?v=20261013e"></script>
 </body>
 </html>
