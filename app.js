@@ -11,6 +11,7 @@ const empty = t => `<p class="note">${t}</p>`;
 const toastEl = document.getElementById('toast');
 let toastTimer;
 function toast(msg) {
+  if (/^✓|sent|verified/i.test(msg)) sfx('success');
   toastEl.textContent = msg;
   toastEl.classList.add('on');
   clearTimeout(toastTimer);
@@ -611,6 +612,7 @@ if (S) enter();
 function animateValue(el, endVal, duration = 800) {
   if (!el) return;
   const startVal = parseFloat(el.dataset.val || '0') || 0;
+  if (el.id === 'sbal' && startVal > 0 && endVal > startVal) sfx('points');
   el.dataset.val = endVal;
   const fmt = v => Math.round(v).toLocaleString();
   if (matchMedia('(prefers-reduced-motion: reduce)').matches || startVal === endVal) { el.textContent = fmt(endVal); return; }
@@ -674,4 +676,48 @@ function animateValue(el, endVal, duration = 800) {
     c.style.setProperty('--mx', (e.clientX - r.left) + 'px');
     c.style.setProperty('--my', (e.clientY - r.top) + 'px');
   }, { passive: true });
+})();
+
+/* ---- soft UI sounds: off until the visitor interacts, lazy-loaded, mutable, remembered per device ---- */
+let sndOn = (() => {
+  const v = localStorage.getItem('qf_snd');
+  return v === null ? !matchMedia('(prefers-reduced-motion: reduce)').matches : v === '1';
+})();
+let sndLoad = null, sndReady = false;
+const sndPool = {};
+function sndLoadOnce() {
+  if (sndLoad) return sndLoad;
+  sndLoad = new Promise(res => {
+    const s = document.createElement('script');
+    s.src = 'sounds.js?v=20261014e';
+    s.onload = () => { for (const k in window.QF_SOUNDS) { const a = new Audio(window.QF_SOUNDS[k]); a.preload = 'auto'; a.volume = k === 'click' ? .45 : .55; sndPool[k] = a; } sndReady = true; res(); };
+    s.onerror = () => res();
+    document.head.appendChild(s);
+  });
+  return sndLoad;
+}
+let userActed = false;
+function sfx(name) {
+  if (!sndOn || !userActed) return;
+  sndLoadOnce().then(() => {
+    const a = sndPool[name]; if (!a) return;
+    const c = a.cloneNode(); c.volume = a.volume; c.play().catch(() => {});
+  });
+}
+addEventListener('pointerdown', () => { userActed = true; }, { once: true, capture: true });
+addEventListener('keydown', () => { userActed = true; }, { once: true, capture: true });
+document.addEventListener('pointerdown', e => {
+  if (e.target.closest('#snd-toggle')) return;
+  if (e.target.closest('button, .btn, .tab, summary, a.btn')) sfx('click');
+}, { passive: true });
+(function sndToggle() {
+  const b = document.createElement('button');
+  b.id = 'snd-toggle'; b.type = 'button';
+  const paint = () => { b.textContent = sndOn ? '🔊' : '🔇'; b.setAttribute('aria-pressed', sndOn ? 'true' : 'false'); b.setAttribute('aria-label', sndOn ? 'Mute sounds' : 'Turn sounds on'); b.title = sndOn ? 'Sounds on' : 'Sounds off'; };
+  paint();
+  b.addEventListener('click', () => {
+    sndOn = !sndOn; localStorage.setItem('qf_snd', sndOn ? '1' : '0'); paint();
+    userActed = true; if (sndOn) sfx('click');
+  });
+  document.body.appendChild(b);
 })();
