@@ -118,3 +118,5 @@ select{padding:12px;border-radius:10px;border:1px solid #2d3a70;background:#0d13
 #netgrid .card .btn{margin-top:12px}
 .ts{min-height:70px;margin:8px 0}
 .st-planned,.st-in_contact{background:#33290f;color:#fcd34d}.st-partner{background:#12331f;color:#86efac}
+
+#dash{scroll-margin-top:76px}#account{scroll-margin-top:76px}#vmsg .btn{display:block;margin-top:10px}#vmsg{line-height:1.6}
