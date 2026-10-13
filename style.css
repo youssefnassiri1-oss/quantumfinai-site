@@ -120,3 +120,37 @@ select{padding:12px;border-radius:10px;border:1px solid #2d3a70;background:#0d13
 .st-planned,.st-in_contact{background:#33290f;color:#fcd34d}.st-partner{background:#12331f;color:#86efac}
 
 #dash{scroll-margin-top:76px}#account{scroll-margin-top:76px}#vmsg .btn{display:block;margin-top:10px}#vmsg{line-height:1.6}
+
+/* ---- v2: withdrawal method cards ---- */
+.mcards{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:16px;max-width:1100px;margin:auto}
+.mcard{display:flex;gap:14px;align-items:center;background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.01)),var(--card);border:1px solid #232d55;border-radius:16px;padding:16px 18px;transition:transform .2s,border-color .2s,box-shadow .2s}
+.mcard:hover{transform:translateY(-4px);border-color:var(--a);box-shadow:0 14px 34px rgba(79,140,255,.18)}
+.mlogo{width:44px;height:44px;flex:0 0 44px;display:grid;place-items:center;background:#0d1330;border:1px solid #2d3a70;border-radius:12px;overflow:hidden}
+.mlogo{font-size:22px}
+.mtxt{display:flex;flex-direction:column;gap:2px}.mtxt b{font-size:15px}.mtxt small{color:var(--mut);font-size:12px}
+.wdpick{display:flex;gap:10px;align-items:center}.wdpick .mlogo{width:46px;height:46px;flex-basis:46px}
+.wdpick select{flex:1}
+/* ---- v2: dashboard stat cards ---- */
+.dstats{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;max-width:1100px;margin:0 auto 26px}
+.dstat{background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.01)),var(--card);border:1px solid #232d55;border-radius:16px;padding:16px 20px;display:flex;flex-direction:column;gap:4px}
+.dstat span{font-size:12px;color:var(--mut);text-transform:uppercase;letter-spacing:.06em}
+.dstat b{font-size:24px;background:linear-gradient(90deg,var(--a),var(--c));-webkit-background-clip:text;background-clip:text;color:transparent}
+.dstat b i{font-style:normal}
+/* ---- v2: clickable filter chips ---- */
+button.pill{font:inherit;color:inherit;cursor:pointer}
+.chips .pill{cursor:pointer;transition:transform .2s,border-color .2s,box-shadow .2s}
+.chips .pill:hover{transform:translateY(-2px);border-color:var(--a)}
+.chips .pill.on{border-color:var(--a);color:#fff;box-shadow:0 6px 18px rgba(79,140,255,.25)}
+/* ---- v2: floating coins in hero ---- */
+.coins{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.coins i{position:absolute;bottom:-40px;width:26px;height:26px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#ffe9a8,#f0b90b 60%,#b8860b);box-shadow:0 0 18px rgba(240,185,11,.5);opacity:.7;animation:coinup linear infinite}
+.coins i:nth-child(1){left:8%;animation-duration:9s;animation-delay:0s}
+.coins i:nth-child(2){left:22%;animation-duration:12s;animation-delay:2s;width:18px;height:18px}
+.coins i:nth-child(3){left:45%;animation-duration:10s;animation-delay:4s}
+.coins i:nth-child(4){left:63%;animation-duration:13s;animation-delay:1s;width:20px;height:20px}
+.coins i:nth-child(5){left:78%;animation-duration:11s;animation-delay:3s}
+.coins i:nth-child(6){left:90%;animation-duration:14s;animation-delay:5s;width:16px;height:16px}
+@keyframes coinup{to{transform:translateY(-110vh) rotate(340deg);opacity:0}}
+.hero>*:not(.coins){position:relative;z-index:1}
+
+@media (prefers-reduced-motion:reduce){.coins{display:none}}
