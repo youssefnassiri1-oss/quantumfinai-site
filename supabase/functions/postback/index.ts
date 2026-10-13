@@ -46,7 +46,7 @@ function parseNetwork(net: string, u: URL): NormalizedPostback | null {
       user: q.get("user_id") ?? "",
       status: Number(q.get("status")) === 2 ? 2 : 1,
       usd: Number(q.get("amount_usd") ?? "0"),
-      points: null, // our own rate is always applied to the USD amount
+      points: Number(q.get("amount_local") ?? "0") || null,
       sigOk,
     };
   }
@@ -65,7 +65,7 @@ function parseNetwork(net: string, u: URL): NormalizedPostback | null {
       user,
       status: type === "chargeback" ? 2 : 1,
       usd: Math.abs(Number(revenue)),
-      points: null, // our own rate is always applied to the USD amount
+      points: Math.abs(Number(q.get("currencyAmount") ?? "0")) || null,
       sigOk,
     };
   }
@@ -84,7 +84,7 @@ function parseNetwork(net: string, u: URL): NormalizedPostback | null {
       user: uid,
       status: amt < 0 ? 2 : 1,
       usd: Math.abs(Number(q.get("payout") ?? "0")),
-      points: null, // our own rate is always applied to the USD amount
+      points: Math.abs(amt) || null,
       sigOk,
     };
   }
@@ -102,7 +102,7 @@ function parseNetwork(net: string, u: URL): NormalizedPostback | null {
       user: q.get("uid") ?? "",
       status: type === "RECONCILIATION" ? 2 : 1,
       usd: Math.abs(Number(q.get("raw") ?? "0")),
-      points: null, // our own rate is always applied to the USD amount
+      points: Math.abs(Number(q.get("val") ?? "0")) || null,
       sigOk,
     };
   }
@@ -173,4 +173,3 @@ Deno.serve(async (req) => {
   if (data === "unknown_user") return await reject(400, "unknown_user", parsed.txn);
   return out(200, "ok");
 });
-
