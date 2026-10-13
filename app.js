@@ -14,7 +14,7 @@ const say=(t,ok)=>{m.style.color=ok?'#86efac':'#fca5a5';m.textContent=t};
 document.querySelectorAll('.tabs .tab').forEach(b=>b.addEventListener('click',()=>{mode=b.dataset.mode;
 document.querySelectorAll('.tabs .tab').forEach(x=>x.classList.toggle('on',x===b));
 document.getElementById('lname').style.display=mode==='signup'?'':'none';
-document.getElementById('fsubmit').textContent=mode==='signup'?'Create account':'Sign in';
+document.getElementById('tsauth').style.display=mode==='signup'?'':'none';document.getElementById('fsubmit').textContent=mode==='signup'?'Create account':'Sign in';
 document.getElementById('ftitle').textContent=mode==='signup'?'Create an account':'Sign in';
 f.pw.autocomplete=mode==='signup'?'new-password':'current-password';tsReset('tsauth')}));
 function showUser(email){if(!email)return;const w=document.getElementById('who');w.hidden=false;w.textContent='✓ Signed in as '+email;document.getElementById('balnote').textContent='Signed in as '+email+'. Your balance is 0 points. No offers are live yet.';}
@@ -23,13 +23,13 @@ f.addEventListener('submit',async e=>{e.preventDefault();
 if(!/^\S+@\S+\.\S+$/.test(f.email.value)||f.pw.value.length<8){say('Check your email and password (8 characters minimum)');return}
 if(mode==='signup'&&!f.name.value.trim()){say('Name is required');return}
 if(!SB_KEY){say('Accounts are opening soon. Please try again later.',true);return}
-const cap=tsToken('tsauth');if(!cap){say('Please complete the human check first');return}
-try{if(mode==='signup'){const[r,d]=await sb('/auth/v1/signup',{email:f.email.value,password:f.pw.value,data:{name:f.name.value.trim()},gotrue_meta_security:{captcha_token:cap}});
-if(!r.ok)throw d;if(d&&d.access_token){say('✓ Account created. Welcome!',true);setSess(d);enter();sendVerify()}else{say('✓ Account created. You can sign in now.',true)}}
-else{const[r,d]=await sb('/auth/v1/token?grant_type=password',{email:f.email.value,password:f.pw.value,gotrue_meta_security:{captcha_token:cap}});
+const cap=mode==='signup'?tsToken('tsauth'):'';if(mode==='signup'&&!cap){say('Please complete the human check first');return}
+try{if(mode==='signup'){const sr=await fetch(SB_URL+'/functions/v1/signup',{method:'POST',headers:{apikey:SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({email:f.email.value,password:f.pw.value,name:f.name.value.trim(),token:cap})});const sd=await sr.json().catch(()=>({}));if(!sr.ok)throw {msg:sd.error||'Could not create the account'};
+const[r2,d2]=await sb('/auth/v1/token?grant_type=password',{email:f.email.value,password:f.pw.value});if(!r2.ok)throw d2;say('✓ Account created. Welcome!',true);setSess(d2);enter();sendVerify()}
+else{const[r,d]=await sb('/auth/v1/token?grant_type=password',{email:f.email.value,password:f.pw.value});
 if(!r.ok)throw d;say('✓ Welcome back',true);setSess(d);enter()}}
 catch(x){let t=(x&&(x.msg||x.message))||'';say(!t?'Could not connect, try again later':/Invalid login/i.test(t)?'Wrong email or password':/not confirmed/i.test(t)?'This account is not active yet. Please contact support.':/captcha/i.test(t)?'The human check expired. Please complete it again and retry.':t)}
-finally{tsReset('tsauth')}});
+finally{if(mode==='signup')tsReset('tsauth')}});
 
 document.documentElement.classList.add('js');
 const rv=[...document.querySelectorAll('section:not(.hero) h2,.card,.pill,.cardbox,.formbox,.sh,.faq details,.stats div')];
@@ -122,7 +122,7 @@ document.querySelectorAll('#dtabs .tab').forEach(x=>x.classList.toggle('on',x===
 const REFUSED='This request could not be completed. It has been recorded for review.';
 async function act(fn,ok,needVal){try{const r=await fn();if(r==='too_fast'){toast('Submitted too quickly. Please complete the offer first, then try again.');return}if(needVal&&!r){toast(REFUSED);await loadDash();return}toast(ok);await loadDash()}catch(e){toast(e.message)}}
 document.getElementById('dash').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;const d=b.dataset;
-if(d.claim)act(async()=>{const t=tsToken('tshuman');if(!t)throw new Error('Please complete the human check first');await guard({action:'human',token:t});tsReset('tshuman');const r=await rpc('claim_offer',{p_offer:d.claim});if(r){let h=localStorage.getItem('qf_d');guard({action:'monitor',hash:h?await sha('qf|'+h):'',fp:fpParts()}).catch(()=>{})}return r},'Offer started',true);
+if(d.claim)act(async()=>{const r=await rpc('claim_offer',{p_offer:d.claim});if(r){let h=localStorage.getItem('qf_d');guard({action:'monitor',hash:h?await sha('qf|'+h):'',fp:fpParts()}).catch(()=>{})}return r},'Offer started',true);
 if(d.submit){const n=prompt('Add a short note for the reviewer (optional)');if(n!==null)act(()=>rpc('submit_claim',{p_claim:d.submit,p_note:n}),'Sent for review')}
 if(d.cancel)act(()=>rpc('cancel_withdrawal',{p_id:d.cancel}),'Request cancelled');
 if(d.rc){const[i,s]=d.rc.split('|');const n=prompt('Note (optional)')||'';act(()=>rpc('admin_review_claim',{p_claim:i,p_status:s,p_note:n}),'Claim '+s)}
@@ -143,7 +143,7 @@ return{screen:screen.width+'x'+screen.height+'x'+(window.devicePixelRatio||1),tz
 async function regDevice(){try{let id=localStorage.getItem('qf_d');if(!id){id=crypto.randomUUID();localStorage.setItem('qf_d',id)}const h=await sha('qf|'+id);await rpc('register_device',{p_hash:h});await guard({action:'register',hash:h,fp:fpParts()})}catch(e){}}
 loadPublic();if(S)enter();if(location.hash.length>1){const go=()=>{try{const t=document.querySelector(location.hash);if(t&&!t.hidden)t.scrollIntoView()}catch(e){}};setTimeout(go,900);setTimeout(go,2200)};
 
-document.getElementById('svbtn').addEventListener('click',()=>{const m=document.getElementById('svmsg'),w=document.getElementById('svwrap');(async()=>{try{m.textContent='Checking...';const t=tsToken('tshuman');if(!t)throw new Error('Please complete the human check above first');await guard({action:'human',token:t});tsReset('tshuman');const k=await tok();const r=await fetch(SB_URL+'/functions/v1/cpx-wall',{method:'POST',headers:{apikey:SB_KEY,Authorization:'Bearer '+k,'Content-Type':'application/json'},body:'{}'});const d=await r.json().catch(()=>({}));if(!r.ok||!d.url)throw new Error(d.error||'Surveys are not available right now');const f=document.createElement('iframe');f.src=d.url;f.title='CPX Research surveys';f.style.cssText='width:100%;height:1400px;border:0;border-radius:12px;background:#fff';f.loading='lazy';w.replaceChildren(f);m.textContent='';}catch(e){m.textContent=e.message}})()});
+document.getElementById('svbtn').addEventListener('click',()=>{const m=document.getElementById('svmsg'),w=document.getElementById('svwrap');(async()=>{try{m.textContent='Loading...';const k=await tok();const r=await fetch(SB_URL+'/functions/v1/cpx-wall',{method:'POST',headers:{apikey:SB_KEY,Authorization:'Bearer '+k,'Content-Type':'application/json'},body:'{}'});const d=await r.json().catch(()=>({}));if(!r.ok||!d.url)throw new Error(d.error||'Surveys are not available right now');const f=document.createElement('iframe');f.src=d.url;f.title='CPX Research surveys';f.style.cssText='width:100%;height:1400px;border:0;border-radius:12px;background:#fff';f.loading='lazy';w.replaceChildren(f);m.textContent='';}catch(e){m.textContent=e.message}})()});
 
 async function sendVerify(){try{const t=await tok();if(!t)return false;const r=await fetch(SB_URL+'/functions/v1/send-verify',{method:'POST',headers:{apikey:SB_KEY,Authorization:'Bearer '+t,'Content-Type':'application/json'}});return r.ok}catch(e){return false}}
 async function verifState(){try{const t=await tok();if(!t)return;const r=await fetch(SB_URL+'/rest/v1/email_verified?select=user_id',{headers:{apikey:SB_KEY,Authorization:'Bearer '+t}});const d=await r.json();const m=document.getElementById('vmsg');if(!m)return;
