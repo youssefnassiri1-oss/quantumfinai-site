@@ -154,3 +154,5 @@ button.pill{font:inherit;color:inherit;cursor:pointer}
 .hero>*:not(.coins){position:relative;z-index:1}
 
 @media (prefers-reduced-motion:reduce){.coins{display:none}}
+
+.mcard.soon{opacity:.72;filter:saturate(.7)}.mcard.soon:hover{transform:none;box-shadow:none;border-color:#232d55}.mcard .tag{margin-left:auto;white-space:nowrap}
