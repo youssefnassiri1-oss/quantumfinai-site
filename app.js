@@ -25,10 +25,10 @@ if(mode==='signup'&&!f.name.value.trim()){say('Name is required');return}
 if(!SB_KEY){say('Accounts are opening soon. Please try again later.',true);return}
 const cap=tsToken('tsauth');if(!cap){say('Please complete the human check first');return}
 try{if(mode==='signup'){const[r,d]=await sb('/auth/v1/signup',{email:f.email.value,password:f.pw.value,data:{name:f.name.value.trim()},gotrue_meta_security:{captcha_token:cap}});
-if(!r.ok)throw d;say('✓ Account created. Check your email to confirm, then sign in.',true)}
+if(!r.ok)throw d;if(d&&d.access_token){say('✓ Account created. Welcome!',true);setSess(d);enter()}else{say('✓ Account created. You can sign in now.',true)}}
 else{const[r,d]=await sb('/auth/v1/token?grant_type=password',{email:f.email.value,password:f.pw.value,gotrue_meta_security:{captcha_token:cap}});
 if(!r.ok)throw d;say('✓ Welcome back',true);setSess(d);enter()}}
-catch(x){let t=(x&&(x.msg||x.message))||'';say(!t?'Could not connect, try again later':/Invalid login/i.test(t)?'Wrong email or password':/not confirmed/i.test(t)?'Please confirm your email first (check your inbox and spam folder), then sign in.':/captcha/i.test(t)?'The human check expired. Please complete it again and retry.':t)}
+catch(x){let t=(x&&(x.msg||x.message))||'';say(!t?'Could not connect, try again later':/Invalid login/i.test(t)?'Wrong email or password':/not confirmed/i.test(t)?'This account is not active yet. Please contact support.':/captcha/i.test(t)?'The human check expired. Please complete it again and retry.':t)}
 finally{tsReset('tsauth')}});
 
 document.documentElement.classList.add('js');
