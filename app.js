@@ -52,17 +52,29 @@ const badge=s=>`<span class="st st-${esc(s)}">${esc(s.replace('_',' '))}</span>`
 const when=t=>new Date(t).toLocaleString();
 const row=(a,b,c)=>`<div class="lrow"><div>${a}</div><div class="lm">${b||''}</div><div class="la">${c||''}</div></div>`;
 const empty=t=>`<p class="note">${t}</p>`;
-const CH=['All','Surveys','Apps','Games','Trials','Tasks'];
+const CH=['All','Surveys','Offerwalls','Games','Apps','Trials','Tasks','Services'];
 /* Generic icons for withdrawal methods (no brand logos) */
 const LOGOS={bank_transfer:'\uD83C\uDFE6',digital_wallet:'\uD83D\uDC5B',gift_card:'\uD83C\uDF81',crypto:'\uD83E\uDE99'};
+const BRANDS={
+binance:`<svg viewBox="0 0 32 32" aria-hidden="true"><g fill="#F0B90B"><rect x="13.2" y="13.2" width="5.6" height="5.6"/><rect x="13.2" y="4.5" width="5.6" height="5.6"/><rect x="13.2" y="21.9" width="5.6" height="5.6"/><rect x="4.5" y="13.2" width="5.6" height="5.6"/><rect x="21.9" y="13.2" width="5.6" height="5.6"/></g></svg>`,
+cwallet:`<svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="#00C48C"/><text x="16" y="22.5" text-anchor="middle" font-family="Arial,sans-serif" font-size="16" font-weight="800" fill="#fff">C</text></svg>`,
+paypal:`<svg viewBox="0 0 32 32" aria-hidden="true"><text x="4" y="24" font-family="Arial,sans-serif" font-size="19" font-weight="800" font-style="italic" fill="#003087">P</text><text x="14.5" y="24" font-family="Arial,sans-serif" font-size="19" font-weight="800" font-style="italic" fill="#009CDE">P</text></svg>`,
+itunes:`<svg viewBox="0 0 32 32" aria-hidden="true"><defs><linearGradient id="qfit" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FA57A0"/><stop offset="1" stop-color="#FA243C"/></linearGradient></defs><rect width="32" height="32" rx="8" fill="url(#qfit)"/><text x="16" y="23.5" text-anchor="middle" font-size="17" fill="#fff">\u266A</text></svg>`,
+googleplay:`<svg viewBox="0 0 32 32" aria-hidden="true"><defs><linearGradient id="qfgp" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#00A0FF"/><stop offset=".5" stop-color="#00D563"/><stop offset=".75" stop-color="#FFCE00"/><stop offset="1" stop-color="#FF3A44"/></linearGradient></defs><path d="M9 5.5v21l15-10.5z" fill="url(#qfgp)"/></svg>`,
+amazon:`<svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="#232F3E"/><text x="16" y="20" text-anchor="middle" font-family="Arial,sans-serif" font-size="15" font-weight="800" fill="#fff">a</text><path d="M8 22.5q8 4.5 16-1.5" stroke="#FF9900" stroke-width="2" fill="none" stroke-linecap="round"/></svg>`
+};
+const BRAND_LIST=[['binance','Binance','Crypto'],['cwallet','Cwallet','Crypto wallet'],['paypal','PayPal','Online wallet'],['googleplay','Google Play','Gift card'],['itunes','iTunes','Gift card'],['amazon','Amazon','Gift card']];
+function drawBrands(){const el=document.getElementById('wd');if(el)el.innerHTML=BRAND_LIST.map(b=>`<button type="button" class="mcard soon" data-toast="Not available yet - coming soon."><span class="mlogo">${BRANDS[b[0]]}</span><div class="mtxt"><b>${b[1]}</b><small>${b[2]}</small></div><span class="tag">Coming soon</span></button>`).join('')}
 /* ---- Offer filters (public + dashboard) ---- */
 let PUB=[],FCAT='All',DOFF=[],DTAKEN=new Set(),DFCAT='All';
-const catIcon=c=>({surveys:'\u25C9',apps:'\u25A3',games:'\uD83C\uDFAE',trials:'\u2726',tasks:'\u2713'}[(c||'').toLowerCase()]||'\u25C7');
+const catIcon=c=>({surveys:'\u25C9',apps:'\u25A3',games:'\uD83C\uDFAE',offerwalls:'\u2605',services:'\u2699',trials:'\u2726',tasks:'\u2713'}[(c||'').toLowerCase()]||'\u25C7');
 function paintChips(el,cur){if(!el)return;el.innerHTML=CH.map(n=>`<button type="button" class="pill${n===cur?' on':''}" data-cat="${n}">${n}</button>`).join('')}
 function filt(list,cat){return cat==='All'?list:list.filter(o=>(o.category||'').toLowerCase()===cat.toLowerCase())}
 function pubCard(x){return `<article class="card"><div class="thumb">${catIcon(x.category)}</div><span class="tag">${esc(x.category)}</span><h3>${esc(x.title)}</h3><p>${esc(x.description||'')}</p><div class="pts">${x.points} points</div><a class="btn small" href="#account">Sign in to start</a></article>`}
-function drawPub(){const l=filt(PUB,FCAT);document.getElementById('offergrid').innerHTML=l.length?l.map(pubCard).join(''):(PUB.length?empty('No offers in this category yet.'):SLOTS)}
-function drawDoff(){const l=filt(DOFF,DFCAT);document.getElementById('doffers').innerHTML=l.length?l.map(o=>`<article class="card"><div class="thumb">${catIcon(o.category)}</div><span class="tag">${esc(o.category)}</span><h3>${esc(o.title)}</h3><p>${esc(o.description||'')}</p><div class="pts">${o.points} points</div>${DTAKEN.has(o.id)?'<span class="tag">Started</span>':`<button class="btn small" data-claim="${o.id}">Start offer</button>`}</article>`).join(''):empty(DOFF.length?'No offers in this category yet.':'No offers are available yet. Partner offers will appear here.')}
+function ncat(n){const t=(n.network_type||'').toLowerCase();if(t==='survey')return'Surveys';if(t==='offerwall')return'Offerwalls';if(/game/i.test(n.name))return'Games';return'Services'}
+function netCard(n){return `<article class="card"><div class="thumb">${esc(n.name.slice(0,2).toUpperCase())}</div><span class="tag">${esc(n.category)}</span> <span class="tag">${esc({planned:'Planned',in_contact:'In contact',partner:'Integrated'}[n.status]||'Planned')}</span><h3>${esc(n.name)}</h3><p>${esc(n.description||'')}</p>${n.name==='CPX Research'?`<button class="btn small" data-cpx="1" type="button">Open surveys</button> `:''}${n.website?`<a class="btn small ghost" href="${esc(n.website)}" target="_blank" rel="noopener noreferrer">Visit website</a>`:''}</article>`}
+function drawPub(){const l=filt(PUB,FCAT);document.getElementById('offergrid').innerHTML=l.length?l.map(x=>x.isNet?netCard(x):pubCard(x)).join(''):empty(FCAT==='All'?'Nothing here yet.':'No '+FCAT.toLowerCase()+' yet.')}
+function drawDoff(){const l=filt(DOFF,DFCAT);document.getElementById('doffers').innerHTML=l.length?l.map(o=>`<article class="card"><div class="thumb">${catIcon(o.category)}</div><span class="tag">${esc(o.category)}</span><h3>${esc(o.title)}</h3><p>${esc(o.description||'')}</p><div class="pts">${o.points} points</div>${DTAKEN.has(o.id)?'<span class="tag">Started</span>':`<button class="btn small" data-claim="${o.id}">Start offer</button>`}</article>`).join(''):empty(DOFF.length?'No '+DFCAT.toLowerCase()+' yet.':'No offers are available yet. Partner offers will appear here.')}
 function wdLogo(){const s=document.getElementById('wdm'),p=document.getElementById('wdlogo');if(s&&p)p.textContent=LOGOS[s.value]||'\u25C7'}
 paintChips(document.getElementById('chips'),FCAT);
 paintChips(document.getElementById('dchips'),DFCAT);
@@ -73,9 +85,9 @@ const SLOTS=Array.from({length:6},()=>`<article class="card slot"><div class="th
 document.getElementById('offergrid').innerHTML=SLOTS;
 async function loadPublic(){try{const[o,m,nets]=await Promise.all([api('offers?select=id,title,description,category,points&status=eq.active&order=created_at.desc'),api('withdrawal_methods?select=code,label,min_points&active=eq.true'),api('partners?select=id,name,website,description,network_type,status&active=eq.true&order=name')]);
 window.NETS=nets;document.getElementById('netgrid').innerHTML=nets.map(n=>`<article class="card"><div class="thumb">${esc(n.name.slice(0,2).toUpperCase())}</div><span class="tag">${esc(n.network_type)}</span> <span class="tag">${esc({planned:'Planned',in_contact:'In contact',partner:'Integrated'}[n.status]||'Planned')}</span><h3>${esc(n.name)}</h3><p>${esc(n.description||'')}</p>${n.name==='CPX Research'?`<button class="btn small" data-cpx="1" type="button">Open surveys</button> `:''}${n.website?`<a class="btn small ghost" href="${esc(n.website)}" target="_blank" rel="noopener noreferrer">Visit website</a>`:''}</article>`).join('');
-PUB=o;drawPub();
+PUB=o.concat(nets.map(n=>Object.assign({},n,{category:ncat(n),isNet:true})));drawPub();
 const wdm=document.getElementById('wdm');
-document.getElementById('wd').innerHTML=m.length?m.map(x=>`<div class="mcard soon"><span class="mlogo">${LOGOS[x.code]||'\u25C7'}</span><div class="mtxt"><b>${esc(x.label)}</b><small>from ${Number(x.min_points).toLocaleString()} points</small></div><span class="tag">Coming soon</span></div>`).join(''):empty('Withdrawal methods are being added.');
+drawBrands();
 wdm.innerHTML=m.map(x=>`<option value="${esc(x.code)}">${esc(x.label)} (min ${Number(x.min_points).toLocaleString()})</option>`).join('');wdLogo()}catch(e){}}
 async function loadDash(){try{
 const[bal,offers,claims,led,wds]=await Promise.all([rpc('my_balance'),api('offers?select=id,title,description,category,points&status=eq.active'),api('offer_claims?select=*,offers(title,points)&order=created_at.desc'),api('points_ledger?select=*&order=created_at.desc&limit=50'),api('withdrawal_requests?select=*&order=created_at.desc')]);
