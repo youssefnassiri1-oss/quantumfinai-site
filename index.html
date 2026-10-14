@@ -80,9 +80,10 @@
           <label id="lname">Full name<input name="name" autocomplete="name" placeholder="Your name"></label>
           <label>Email<input name="email" type="email" required autocomplete="email" placeholder="you@example.com"></label>
           <label>Password<input name="pw" type="password" minlength="8" required autocomplete="new-password" placeholder="Min. 8 characters"></label>
+          <label id="consent-row" style="display:flex;flex-direction:row;align-items:flex-start;gap:10px;line-height:1.5"><input id="legal-consent" name="consent" type="checkbox" required style="width:18px;height:18px;flex-shrink:0;margin-top:3px"><span>I agree to the <a href="/terms" target="_blank" rel="noopener" style="color:#86c7ff;text-decoration:underline">Terms of Service</a> and acknowledge the <a href="/privacy" target="_blank" rel="noopener" style="color:#86c7ff;text-decoration:underline">Privacy Policy</a>.</span></label>
           <div id="tsauth" class="ts"></div>
           <button class="btn big" type="submit" id="fsubmit">Create account</button>
-          <p class="note" id="formmsg" aria-live="polite">Your data is strictly used for account management and never sold.</p>
+          <p class="note" id="formmsg" aria-live="polite">We use account, reward and security data as described in our Privacy Policy.</p>
         </form>
       </div>
     </section>
@@ -269,6 +270,8 @@
   <div class="fl">
     <a href="#top">Home</a>
     <a href="#faq">FAQ</a>
+    <a href="/terms">Terms of Service</a>
+    <a href="/privacy">Privacy Policy</a>
     <a href="mailto:youssef@quantumfinai.me?subject=Partnership%20Inquiry">Partner / Advertise</a>
     <a href="mailto:youssef@quantumfinai.me">Support</a>
   </div>
@@ -278,6 +281,6 @@
 <div id="toast" role="status"></div>
 <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
 <script src="logos.js?v=20261014l"></script>
-<script src="app.js?v=20261014m"></script>
+<script src="app.js?v=20261015legal1"></script>
 </body>
 </html>
