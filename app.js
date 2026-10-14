@@ -274,6 +274,7 @@ async function loadDash() {
 
     animateValue(document.getElementById('sbal'), Number(bal));
     animateValue(document.getElementById('nav-bal'), Number(bal));
+    if (Number(bal) < 0) toast('Your balance is negative because of a reversed offer. Withdrawals stay unavailable until it is recovered.');
     document.getElementById('sbal-usd').textContent = `≈ $${(bal / 1000).toFixed(2)} USD`;
     animateValue(document.getElementById('stotal'), Number(totalEarned));
     document.getElementById('soff').textContent = claims.length;
@@ -300,11 +301,18 @@ async function loadDash() {
       : empty('You have not started any direct tasks yet.');
 
     document.getElementById('dledger').innerHTML = led.length
-      ? led.map(l => row(
-          `<b>${l.delta > 0 ? '+' : ''}${l.delta.toLocaleString()} pts</b>`,
-          esc(l.reason.replace(/_/g, ' ')),
-          when(l.created_at)
-        )).join('')
+      ? led.map(l => {
+          const rev = l.reason === 'survey_reversal';
+          const label = rev ? 'Reversal' : l.reason.replace(/_/g, ' ');
+          const detail = [l.network, l.offer_name].filter(Boolean).map(esc).join(' - ');
+          const t = l.started_at && Math.abs(new Date(l.created_at) - new Date(l.started_at)) > 1000
+            ? `Started ${when(l.started_at)}<br>Finished ${when(l.created_at)}` : `Finished ${when(l.created_at)}`;
+          return row(
+            `<b${rev ? ' style="color:#fca5a5"' : ''}>${l.delta > 0 ? '+' : ''}${l.delta.toLocaleString()} pts</b>`,
+            esc(label) + (detail ? '<br><small>' + detail + '</small>' : ''),
+            t
+          );
+        }).join('')
       : empty('No point transactions recorded yet.');
 
     document.getElementById('dwd').innerHTML = wds.length
@@ -604,9 +612,9 @@ async function loadAdmin() {
     )).join('') : empty('No users under review.');
 
     document.getElementById('apb').innerHTML = pb.length ? pb.map(x => row(
-      esc(x.partners ? x.partners.name : '') + ' | ' + esc(x.external_txn_id) + '<br><small>' + esc(x.event_type) + (x.points != null ? ' | ' + x.points + ' pts' : '') + '</small>',
+      esc(x.partners ? x.partners.name : '') + ' | ' + esc(x.external_txn_id) + '<br><small>' + esc(x.event_type) + (x.points != null ? ' | ' + x.points + ' pts' : '') + (x.offer_name ? ' | ' + esc(x.offer_name) : '') + '</small>',
       badge(x.signature_ok ? 'verified' : 'rejected'),
-      when(x.created_at)
+      (x.started_at ? 'Started ' + when(x.started_at) + '<br>' : '') + 'Finished ' + when(x.created_at)
     )).join('') : empty('No confirmations recorded.');
 
     document.getElementById('aoffers').innerHTML = of.map(o => row(
