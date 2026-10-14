@@ -211,3 +211,6 @@ button.mcard{font:inherit;color:inherit;text-align:left;width:100%;cursor:pointe
 .wall-sect{grid-column:1/-1;margin:14px 0 2px;font-size:15px;letter-spacing:.06em;text-transform:uppercase;color:#8fa0d6}
 .wall-sect:first-child{margin-top:0}
 .wall-card.live .wall-logo{box-shadow:0 0 0 2px rgba(34,211,238,.5)}
+
+/* Pending state while an action runs */
+.btn.busy{opacity:.55;cursor:progress}
