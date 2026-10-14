@@ -206,6 +206,8 @@ function drawWallPartners(nets) {
           ? `<button class="btn small" type="button" data-open-wannads="1">Launch Offerwall</button>`
           : n.name === 'PubScale' && n.status === 'partner'
           ? `<button class="btn small" type="button" data-open-pubscale="1">Launch Offerwall</button>`
+          : n.name === 'MobiVortex' && n.status === 'partner'
+          ? `<button class="btn small" type="button" data-open-mobivortex="1">Launch Offerwall</button>`
           : `<button class="btn small ghost" type="button" disabled>Coming Soon</button>`}
       </article>`;
   }).join('');
@@ -448,6 +450,32 @@ async function openPubscaleWall() {
   }
 }
 
+const MOBIVORTEX_PLACEMENT = '6acf60a3b8a42db09a09881d';
+async function openMobivortexWall() {
+  const viewer = document.getElementById('wall-viewer');
+  const wrap = document.getElementById('svwrap');
+  document.getElementById('wall-title').textContent = 'MobiVortex Offerwall';
+  viewer.hidden = false;
+  wrap.innerHTML = `<p class="note" style="padding:24px;text-align:center">Loading MobiVortex Offerwall...</p>`;
+  viewer.scrollIntoView({ behavior: 'smooth' });
+  try {
+    const k = await tok();
+    if (!k) throw new Error('Please sign in again.');
+    const uid = JSON.parse(atob(k.split('.')[1].replace(/-/g, '+').replace(/_/g, '/'))).sub;
+    if (!/^[0-9a-f-]{36}$/i.test(uid || '')) throw new Error('Offerwall is temporarily unavailable.');
+    const f = document.createElement('iframe');
+    f.src = 'https://vortexwall.com/ow/' + MOBIVORTEX_PLACEMENT + '/' + encodeURIComponent(uid);
+    f.title = 'MobiVortex Offerwall';
+    f.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox');
+    f.referrerPolicy = 'no-referrer';
+    f.loading = 'lazy';
+    f.style.cssText = 'width:100%;height:calc(100dvh - 130px);min-height:560px;border:0;background:#fff;display:block';
+    wrap.replaceChildren(f);
+  } catch (e) {
+    wrap.innerHTML = `<p class="note" style="padding:24px;color:#fca5a5">${esc(e.message)}</p>`;
+  }
+}
+
 document.getElementById('wall-close').addEventListener('click', () => {
   document.getElementById('wall-viewer').hidden = true;
   document.getElementById('svwrap').innerHTML = '';
@@ -474,6 +502,7 @@ document.getElementById('dash').addEventListener('click', async e => {
   if (d.openCpx) { document.getElementById('wall-title').textContent = 'CPX Research Surveys'; openCpxWall(); return; }
   if (d.openWannads) { openWannadsWall(); return; }
   if (d.openPubscale) { openPubscaleWall(); return; }
+  if (d.openMobivortex) { openMobivortexWall(); return; }
   if (d.claim) {
     act(async () => {
       const r = await rpc('claim_offer', { p_offer: d.claim });
