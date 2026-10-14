@@ -207,3 +207,7 @@ button.mcard{font:inherit;color:inherit;text-align:left;width:100%;cursor:pointe
 @media(max-width:720px){#dash .dtabs{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;padding-bottom:4px}#dash .dtabs::-webkit-scrollbar{display:none}}
 @media(prefers-reduced-motion:reduce){#hero-canvas{display:none}}
 #snd-toggle{position:fixed;left:14px;bottom:14px;z-index:60;width:40px;height:40px;border-radius:50%;border:1px solid #232d55;background:rgba(13,19,48,.85);color:#fff;font-size:18px;line-height:1;cursor:pointer;backdrop-filter:blur(6px)}#snd-toggle:hover{border-color:#4f8cff}
+
+.wall-sect{grid-column:1/-1;margin:14px 0 2px;font-size:15px;letter-spacing:.06em;text-transform:uppercase;color:#8fa0d6}
+.wall-sect:first-child{margin-top:0}
+.wall-card.live .wall-logo{box-shadow:0 0 0 2px rgba(34,211,238,.5)}
