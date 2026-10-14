@@ -41,7 +41,7 @@ const TSW = {};
 function tsRender(id) {
   if (TSW[id] !== undefined || !window.turnstile) return;
   const el = document.getElementById(id);
-  if (el) TSW[id] = turnstile.render(el, { sitekey: TS_KEY, theme: 'dark' });
+  if (el) TSW[id] = turnstile.render(el, { sitekey: TS_KEY, theme: 'dark', 'expired-callback': () => say('The human check expired. Please tick it again.') });
 }
 const tsToken = id => (window.turnstile && TSW[id] !== undefined) ? turnstile.getResponse(TSW[id]) : '';
 const tsReset = id => { if (window.turnstile && TSW[id] !== undefined) turnstile.reset(TSW[id]); };
@@ -109,6 +109,16 @@ const authForm = document.getElementById('signup');
 const formMsg = document.getElementById('formmsg');
 const say = (t, ok) => { formMsg.style.color = ok ? '#86efac' : '#fca5a5'; formMsg.textContent = t; };
 
+// Warm the sign-up function and its CORS preflight as soon as the visitor reaches the form,
+// so a cold start does not hit the click itself.
+let signupWarmed = false;
+const warmSignup = () => {
+  if (signupWarmed) return; signupWarmed = true;
+  fetch(SB_URL + '/functions/v1/signup', { method: 'OPTIONS' }).catch(() => {});
+};
+authForm.addEventListener('focusin', warmSignup, { once: true });
+document.getElementById('account').addEventListener('click', warmSignup, { once: true });
+
 document.querySelectorAll('#account .tabs .tab').forEach(b => b.addEventListener('click', () => {
   mode = b.dataset.mode;
   document.querySelectorAll('#account .tabs .tab').forEach(x => x.classList.toggle('on', x === b));
@@ -129,6 +139,12 @@ authForm.addEventListener('submit', async e => {
   const cap = mode === 'signup' ? tsToken('tsauth') : '';
   if (mode === 'signup' && !cap) { say('Please complete the human check first'); return; }
 
+  const btn = document.getElementById('fsubmit');
+  const oldLabel = btn.textContent;
+  btn.disabled = true;
+  btn.classList.add('busy');
+  btn.textContent = mode === 'signup' ? 'Creating your account…' : 'Signing you in…';
+  say('One moment…', true);
   try {
     if (mode === 'signup') {
       const sr = await fetch(SB_URL + '/functions/v1/signup', {
@@ -138,9 +154,14 @@ authForm.addEventListener('submit', async e => {
       });
       const sd = await sr.json().catch(() => ({}));
       if (!sr.ok) throw { msg: sd.error || 'Could not create the account' };
-      const [r2, d2] = await sb('/auth/v1/token?grant_type=password', { email: authForm.email.value, password: authForm.pw.value });
-      if (!r2.ok) throw d2;
-      setSess(d2); enter(); sendVerify();
+      if (sd.session && sd.session.access_token) {
+        setSess(sd.session);
+      } else {
+        const [r2, d2] = await sb('/auth/v1/token?grant_type=password', { email: authForm.email.value, password: authForm.pw.value });
+        if (!r2.ok) throw d2;
+        setSess(d2);
+      }
+      enter(); sendVerify();
     } else {
       const [r, d] = await sb('/auth/v1/token?grant_type=password', { email: authForm.email.value, password: authForm.pw.value });
       if (!r.ok) throw d;
@@ -150,6 +171,9 @@ authForm.addEventListener('submit', async e => {
     const t = (x && (x.msg || x.message)) || '';
     say(!t ? 'Connection error' : /Invalid login/i.test(t) ? 'Wrong email or password' : t);
   } finally {
+    btn.disabled = false;
+    btn.classList.remove('busy');
+    btn.textContent = oldLabel;
     if (mode === 'signup') tsReset('tsauth');
   }
 });
@@ -510,15 +534,21 @@ async function act(fn, okMsg, needVal) {
 
 document.getElementById('dash').addEventListener('click', async e => {
   const b = e.target.closest('button');
-  if (!b) return;
+  if (!b || b.disabled) return;
   const d = b.dataset;
+  // Immediate feedback: disable the clicked button and mark it busy while its action runs.
+  const run = (fn, okMsg, needVal) => {
+    b.disabled = true;
+    b.classList.add('busy');
+    return act(fn, okMsg, needVal).finally(() => { b.disabled = false; b.classList.remove('busy'); });
+  };
 
   if (d.openCpx) { document.getElementById('wall-title').textContent = 'CPX Research Surveys'; openCpxWall(); return; }
   if (d.openWannads) { openWannadsWall(); return; }
   if (d.openPubscale) { openPubscaleWall(); return; }
   if (d.openMobivortex) { openMobivortexWall(); return; }
   if (d.claim) {
-    act(async () => {
+    run(async () => {
       const r = await rpc('claim_offer', { p_offer: d.claim });
       if (r) {
         const h = localStorage.getItem('qf_d');
@@ -529,40 +559,40 @@ document.getElementById('dash').addEventListener('click', async e => {
   }
   if (d.submit) {
     const n = await askNote('Proof or completion note (optional)');
-    if (n !== null) act(() => rpc('submit_claim', { p_claim: d.submit, p_note: n }), 'Submitted for review');
+    if (n !== null) run(() => rpc('submit_claim', { p_claim: d.submit, p_note: n }), 'Submitted for review');
   }
-  if (d.cancel) act(() => rpc('cancel_withdrawal', { p_id: d.cancel }), 'Request cancelled');
+  if (d.cancel) run(() => rpc('cancel_withdrawal', { p_id: d.cancel }), 'Request cancelled');
   if (d.rc) {
     const [i, s] = d.rc.split('|');
     const n = await askNote(`Admin note for ${s}`);
-    if (n !== null) act(() => rpc('admin_review_claim', { p_claim: i, p_status: s, p_note: n }), 'Claim ' + s);
+    if (n !== null) run(() => rpc('admin_review_claim', { p_claim: i, p_status: s, p_note: n }), 'Claim ' + s);
   }
   if (d.rw) {
     const [i, s] = d.rw.split('|');
     const n = await askNote('Admin note (optional)');
-    if (n !== null) act(() => rpc('admin_review_withdrawal', { p_id: i, p_status: s, p_note: n }), 'Updated');
+    if (n !== null) run(() => rpc('admin_review_withdrawal', { p_id: i, p_status: s, p_note: n }), 'Updated');
   }
   if (d.rev) {
     const n = await askNote('Reason for reversal');
-    if (n !== null) act(() => rpc('admin_reverse_claim', { p_claim: d.rev, p_note: n }), 'Claim reversed');
+    if (n !== null) run(() => rpc('admin_reverse_claim', { p_claim: d.rev, p_note: n }), 'Claim reversed');
   }
   if (d.us) {
     const [i, s] = d.us.split('|');
-    act(() => rpc('admin_set_user_status', { p_user: i, p_status: s, p_note: 'Set by admin' }), 'User status: ' + s);
+    run(() => rpc('admin_set_user_status', { p_user: i, p_status: s, p_note: 'Set by admin' }), 'User status: ' + s);
   }
-  if (d.rf) act(() => rpc('admin_resolve_flag', { p_id: d.rf }), 'Flag resolved');
+  if (d.rf) run(() => rpc('admin_resolve_flag', { p_id: d.rf }), 'Flag resolved');
   if (d.thr) {
     const v = String(parseInt(document.getElementById('thr').value, 10));
     if (!(v >= 1 && v <= 100)) { toast('Enter 1–100'); return; }
-    act(() => rpc('admin_set_setting', { p_key: 'ip_score_threshold', p_value: v }), 'Threshold saved');
+    run(() => rpc('admin_set_setting', { p_key: 'ip_score_threshold', p_value: v }), 'Threshold saved');
   }
   if (d.ns) {
     const [i, s] = d.ns.split('|');
-    act(async () => { await rpc('admin_set_partner_status', { p_id: i, p_status: s }); await loadPublic(); }, 'Network updated');
+    run(async () => { await rpc('admin_set_partner_status', { p_id: i, p_status: s }); await loadPublic(); }, 'Network updated');
   }
   if (d.os) {
     const [i, s] = d.os.split('|');
-    act(() => rpc('admin_set_offer_status', { p_offer: i, p_status: s }), 'Offer updated');
+    run(() => rpc('admin_set_offer_status', { p_offer: i, p_status: s }), 'Offer updated');
   }
 });
 
