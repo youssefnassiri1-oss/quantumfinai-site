@@ -126,6 +126,8 @@ document.querySelectorAll('#account .tabs .tab').forEach(b => b.addEventListener
   document.getElementById('tsauth').style.display = mode === 'signup' ? '' : 'none';
   document.getElementById('fsubmit').textContent = mode === 'signup' ? 'Create account' : 'Sign in';
   document.getElementById('ftitle').textContent = mode === 'signup' ? 'Create an account' : 'Sign in';
+  document.getElementById('consent-row').style.display = mode === 'signup' ? 'flex' : 'none';
+  document.getElementById('legal-consent').required = mode === 'signup';
   authForm.pw.autocomplete = mode === 'signup' ? 'new-password' : 'current-password';
   tsReset('tsauth');
 }));
@@ -136,6 +138,7 @@ authForm.addEventListener('submit', async e => {
     say('Check your email and password (8 characters minimum)'); return;
   }
   if (mode === 'signup' && !authForm.name.value.trim()) { say('Name is required'); return; }
+  if (mode === 'signup' && !document.getElementById('legal-consent').checked) { say('Please agree to the Terms of Service and acknowledge the Privacy Policy'); return; }
   const cap = mode === 'signup' ? tsToken('tsauth') : '';
   if (mode === 'signup' && !cap) { say('Please complete the human check first'); return; }
 
@@ -150,7 +153,7 @@ authForm.addEventListener('submit', async e => {
       const sr = await fetch(SB_URL + '/functions/v1/signup', {
         method: 'POST',
         headers: { apikey: SB_KEY, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: authForm.email.value, password: authForm.pw.value, name: authForm.name.value.trim(), token: cap })
+        body: JSON.stringify({ email: authForm.email.value, password: authForm.pw.value, name: authForm.name.value.trim(), token: cap, consent: true, policy_version: "2026-10-15" })
       });
       const sd = await sr.json().catch(() => ({}));
       if (!sr.ok) throw { msg: sd.error || 'Could not create the account' };
