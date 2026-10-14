@@ -187,9 +187,13 @@ function paintChips(el, cur) {
 function drawWallPartners(nets) {
   const el = document.getElementById('wallgrid');
   if (!el) return;
-  const sorted = [...(nets || [])].sort((a, b) => (a.name === 'CPX Research' ? -1 : b.name === 'CPX Research' ? 1 : 0));
-  el.innerHTML = sorted.map(n => {
-    const isLive = n.name === 'CPX Research' || n.status === 'partner';
+  const isLiveNet = n => n.name === 'CPX Research' || n.status === 'partner';
+  const byName = (a, b) => (a.name === 'CPX Research' ? -1 : b.name === 'CPX Research' ? 1 : a.name.localeCompare(b.name));
+  const liveNets = (nets || []).filter(isLiveNet).sort(byName);
+  const soonNets = (nets || []).filter(n => !isLiveNet(n)).sort(byName);
+  const sect = t => `<h3 class="wall-sect">${t}</h3>`;
+  const card = n => {
+    const isLive = isLiveNet(n);
     return `
       <article class="wall-card ${isLive ? 'live' : ''}">
         <div class="wall-head">
@@ -210,7 +214,9 @@ function drawWallPartners(nets) {
           ? `<button class="btn small" type="button" data-open-mobivortex="1">Launch Offerwall</button>`
           : `<button class="btn small ghost" type="button" disabled>Coming Soon</button>`}
       </article>`;
-  }).join('');
+  };
+  el.innerHTML = (liveNets.length ? sect('Available now') + liveNets.map(card).join('') : '')
+    + (soonNets.length ? sect('Coming soon') + soonNets.map(card).join('') : '');
 }
 
 function drawDoff() {
