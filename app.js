@@ -239,6 +239,8 @@ function drawWallPartners(nets) {
           ? `<button class="btn small" type="button" data-open-pubscale="1">Launch Offerwall</button>`
           : n.name === 'MobiVortex' && n.status === 'partner'
           ? `<button class="btn small" type="button" data-open-mobivortex="1">Launch Offerwall</button>`
+          : n.name === 'ayeT-Studios' && n.status === 'partner'
+          ? `<button class="btn small" type="button" data-open-ayet="1">Launch Offerwall</button>`
           : `<button class="btn small ghost" type="button" disabled>Coming Soon</button>`}
       </article>`;
   };
@@ -522,6 +524,33 @@ async function openMobivortexWall() {
   }
 }
 
+const AYET_ADSLOT = '30354';
+async function openAyetWall() {
+  if (!(await permitPartner('ayeT-Studios'))) return;
+  const viewer = document.getElementById('wall-viewer');
+  const wrap = document.getElementById('svwrap');
+  document.getElementById('wall-title').textContent = 'ayeT-Studios Offerwall';
+  viewer.hidden = false;
+  wrap.innerHTML = `<p class="note" style="padding:24px;text-align:center">Loading ayeT-Studios Offerwall...</p>`;
+  viewer.scrollIntoView({ behavior: 'smooth' });
+  try {
+    const k = await tok();
+    if (!k) throw new Error('Please sign in again.');
+    const uid = JSON.parse(atob(k.split('.')[1].replace(/-/g, '+').replace(/_/g, '/'))).sub;
+    if (!/^[0-9a-f-]{36}$/i.test(uid || '')) throw new Error('Offerwall is temporarily unavailable.');
+    const f = document.createElement('iframe');
+    f.src = 'https://offerwall.ayet.io/offers?adSlot=' + AYET_ADSLOT + '&externalIdentifier=' + encodeURIComponent(uid);
+    f.title = 'ayeT-Studios Offerwall';
+    f.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox');
+    f.referrerPolicy = 'no-referrer';
+    f.loading = 'lazy';
+    f.style.cssText = 'width:100%;height:calc(100dvh - 130px);min-height:560px;border:0;background:#fff;display:block';
+    wrap.replaceChildren(f);
+  } catch (e) {
+    wrap.innerHTML = `<p class="note" style="padding:24px;color:#fca5a5">${esc(e.message)}</p>`;
+  }
+}
+
 document.getElementById('wall-close').addEventListener('click', () => {
   document.getElementById('wall-viewer').hidden = true;
   document.getElementById('svwrap').innerHTML = '';
@@ -555,6 +584,7 @@ document.getElementById('dash').addEventListener('click', async e => {
   if (d.openWannads) { openWannadsWall(); return; }
   if (d.openPubscale) { openPubscaleWall(); return; }
   if (d.openMobivortex) { openMobivortexWall(); return; }
+  if (d.openAyet) { openAyetWall(); return; }
   if (d.claim) {
     run(async () => {
       const r = await rpc('claim_offer', { p_offer: d.claim });
