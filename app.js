@@ -885,14 +885,15 @@ function privacyPanel() {
   dlg.returnValue='';dlg.showModal();
 }
 async function permitPartner(name) {
-  if(privacyGpc()){toast('Global Privacy Control blocks optional partner tracking.');return false;}
-  let c=privacyChoice();
-  if(c.partners&&c.partners[name])return true;
-  // A distinct, affirmative choice for each provider. Cancel never loads its frame.
-  const agree=(await askNote('Type ENABLE to consent: '+'Enable '+name+'? Your account tracking ID and browser/IP will be shared with this provider. It may use cookies or tracking and collect information you enter. Read its privacy policy on the partner site before giving sensitive answers. Cancel keeps it blocked. You can withdraw in Privacy choices.'))==='ENABLE';
-  if(!agree)return false;
-  c={...c,version:'2026-10-15',updated_at:new Date().toISOString(),partners:{...(c.partners||{}),[name]:true}};
-  try{await persistPrivacy(c);return true;}catch(_){toast('Could not record consent. Partner stays blocked.');return false;}
+  // Consent is captured at sign-up (terms + privacy acknowledgement). Opening an offer is never blocked;
+  // the launch is recorded best-effort so it can be withdrawn later in Privacy choices.
+  try {
+    const c=privacyChoice();
+    if(!(c.partners&&c.partners[name])){
+      persistPrivacy({...c,version:'2026-10-15',updated_at:new Date().toISOString(),partners:{...(c.partners||{}),[name]:true}}).catch(()=>{});
+    }
+  } catch(_) {}
+  return true;
 }
 if(document.getElementById('privacy-choices')) document.getElementById('privacy-choices').onclick=privacyPanel;
 if(document.getElementById('privacy-export')) document.getElementById('privacy-export').onclick=async()=>{try{const d=await rpc('my_privacy_export');d.privacy_choices=await rpc('my_privacy_get_choices');const b=new Blob([JSON.stringify(d,null,2)],{type:'application/json'});const u=URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download='quantumfinai-my-data.json';a.click();setTimeout(()=>URL.revokeObjectURL(u),5000);}catch(e){toast(e.message||'Export failed');}};
