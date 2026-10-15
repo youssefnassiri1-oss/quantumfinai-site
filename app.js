@@ -389,6 +389,7 @@ async function enter() {
   document.getElementById('user-nav').hidden = false;
   document.getElementById('dash').hidden = false;
   scrollTo({ top: 0, behavior: 'smooth' });
+  await syncPrivacyChoices();
   regDevice();
   await loadDash();
 }
@@ -699,7 +700,7 @@ async function guard(body) {
 function privacyChoice() {
   try { return JSON.parse(localStorage.getItem('qf_privacy') || '{}'); } catch (_) { return {}; }
 }
-const privacyGpc = () => navigator.globalPrivacyControl === true;
+function privacyGpc() { return navigator.globalPrivacyControl === true; }
 function fpParts() { return {}; } // Detailed hardware/GPU fingerprinting removed.
 async function regDevice() {
   // No persistent device identifier or fingerprint without a recorded opt-in.
@@ -850,6 +851,17 @@ document.addEventListener('pointerdown', e => {
 })();
 
 // Privacy choices are separate from acceptance of the service terms.
+async function syncPrivacyChoices() {
+  try {
+    const remote=await rpc('my_privacy_get_choices'),local=privacyChoice();
+    if(remote){
+      const partners={};for(const name of Object.keys(local.partners||{}))if(remote.partners&&remote.partners[name])partners[name]=true;
+      localStorage.setItem('qf_privacy',JSON.stringify({...local,partners,fingerprinting:!!local.fingerprinting&&!!remote.fingerprinting&&!privacyGpc()}));
+      if(!privacyChoice().fingerprinting)localStorage.removeItem('qf_d');
+    }
+    if(privacyGpc())await persistPrivacy({version:'2026-10-15',fingerprinting:false,partners:{},gpc:true});
+  } catch(_) { localStorage.setItem('qf_privacy',JSON.stringify({version:'2026-10-15',fingerprinting:false,partners:{}}));localStorage.removeItem('qf_d'); }
+}
 async function persistPrivacy(c) {
   localStorage.setItem('qf_privacy',JSON.stringify(c));
   if (!c.fingerprinting || privacyGpc()) localStorage.removeItem('qf_d');
