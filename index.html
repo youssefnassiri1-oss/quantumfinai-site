@@ -169,7 +169,7 @@
 
     <!-- 4. REDESIGNED PROFILE TAB -->
     <div class="dpane" id="d-profile" hidden>
-      <div class="prof-grid">
+      <section class="prof-card" style="margin-bottom:20px"><h3>Your data & privacy</h3><p class="note">Download your records, correct your name or close your account. For email corrections, objections, restrictions or a human review, contact <a href="mailto:youssef@quantumfinai.me">support</a>.</p><div class="privacy-actions"><button class="btn ghost" id="privacy-export">Download my data</button><button class="btn ghost" id="privacy-correct">Correct my name</button><button class="btn ghost" id="privacy-delete">Delete my account</button></div></section><div class="prof-grid">
         <div class="prof-card">
           <div class="prof-head">
             <div class="prof-avatar" id="pavatar">U</div>
@@ -281,6 +281,7 @@
 <div id="toast" role="status"></div>
 <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
 <script src="logos.js?v=20261014l"></script>
-<script src="app.js?v=20261015legal1"></script>
+<button id="privacy-choices" class="privacy-fixed btn ghost" type="button">Privacy choices</button>
+<script src="app.js?v=20261015privacy2"></script>
 </body>
 </html>
