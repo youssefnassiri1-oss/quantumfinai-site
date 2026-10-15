@@ -19,6 +19,30 @@ function safeEq(a: string, b: string): boolean {
   return x.length === y.length && timingSafeEqual(x, y);
 }
 
+
+function b64url(buf: Buffer): string {
+  return buf.toString("base64").replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+function exactEq(a: string, b: string): boolean {
+  const x = Buffer.from(a), y = Buffer.from(b);
+  return x.length === y.length && timingSafeEqual(x, y);
+}
+// TheoremReach: HMAC-SHA1 over the full callback URL without the trailing hash parameter, base64url, no padding.
+function trSigOk(reqUrl: string, hash: string): boolean {
+  const secret = Deno.env.get("THEOREMREACH_SECRET") ?? "";
+  if (!secret || !hash) return false;
+  const base = reqUrl.replace(/[?&]hash=[^&]*$/, "");
+  const bases = new Set<string>([base, base.replace(/^http:/, "https:")]);
+  for (const b of [...bases]) {
+    const p = new URL(b);
+    if (!p.pathname.startsWith("/functions/v1/")) { p.pathname = "/functions/v1" + p.pathname; bases.add(p.toString()); }
+  }
+  for (const b of bases) {
+    if (exactEq(hash, b64url(createHmac("sha1", secret).update(b).digest()))) return true;
+  }
+  return false;
+}
+
 const out = (code: number, body: string) =>
   new Response(body, { status: code, headers: { "content-type": "text/plain", "cache-control": "no-store" } });
 
@@ -89,6 +113,67 @@ function parseNetwork(net: string, u: URL): NormalizedPostback | null {
     };
   }
 
+  if (net === "wannads") {
+    const secret = Deno.env.get("WANNADS_SECRET") ?? "";
+    const user = q.get("user_id") ?? "";
+    const txn = q.get("transaction_id") ?? "";
+    const reward = q.get("reward") ?? "";
+    const sig = q.get("signature") ?? "";
+    // Wannads signature: MD5(user_id + transaction_id + reward + SECRET)
+    const sigOk = !!secret && safeEq(sig, md5(`${user}${txn}${reward}${secret}`));
+    const st = (q.get("status") ?? "credited").toLowerCase();
+    const rw = Number(reward);
+    return {
+      partnerName: "Wannads",
+      txn,
+      user,
+      status: st === "rejected" || rw < 0 ? 2 : 1,
+      usd: Math.abs(Number(q.get("payout") ?? "0")),
+      points: Math.abs(rw) || null,
+      sigOk,
+    };
+  }
+
+  if (net === "pubscale") {
+    const secret = Deno.env.get("PUBSCALE_SECRET") ?? "";
+    const user = q.get("user_id") ?? "";
+    const txn = q.get("token") ?? "";
+    const value = Number(q.get("value") ?? "0");
+    const sig = q.get("signature") ?? "";
+    // PubScale signature: MD5(secret.user_id.int(value).token)
+    const sigOk = !!secret && !!sig && safeEq(sig, md5(`${secret}.${user}.${Math.trunc(value)}.${txn}`));
+    return {
+      partnerName: "PubScale",
+      txn,
+      user,
+      status: 1,
+      usd: Math.abs(Number(q.get("payout_usd") ?? "0")),
+      points: Math.abs(Math.trunc(value)) || null,
+      sigOk,
+    };
+  }
+
+  if (net === "mobivortex") {
+    const secret = Deno.env.get("MOBIVORTEX_SECRET") ?? "";
+    const user = q.get("identity_id") ?? "";
+    const txn = q.get("txid") ?? "";
+    const camp = q.get("campaign_id") ?? "";
+    const hash = q.get("hash") ?? "";
+    // VortexWall hash: SHA256(identity_id + campaign_id + txid + SECRET)
+    const sigOk = !!secret && !!hash && safeEq(hash, sha256(`${user}${camp}${txn}${secret}`));
+    const pts = Number(q.get("points") ?? "0");
+    const rejected = (q.get("result") ?? "completed").toLowerCase() === "rejected" || pts < 0;
+    return {
+      partnerName: "MobiVortex",
+      txn,
+      user,
+      status: rejected ? 2 : 1,
+      usd: Math.abs(Number(q.get("payout") ?? "0")),
+      points: Math.abs(Math.trunc(pts)) || null,
+      sigOk,
+    };
+  }
+
   if (net === "bitlabs") {
     const secret = Deno.env.get("BITLABS_SECRET") ?? "";
     const hash = q.get("hash") ?? "";
@@ -107,10 +192,56 @@ function parseNetwork(net: string, u: URL): NormalizedPostback | null {
     };
   }
 
+  if (net === "theoremreach") {
+    const reward = Math.abs(Math.trunc(Number(q.get("reward") ?? "0")));
+    return {
+      partnerName: "TheoremReach",
+      txn: q.get("tx_id") ?? "",
+      user: q.get("user_id") ?? "",
+      status: (q.get("reversal") ?? "").toLowerCase() === "true" ? 2 : 1,
+      usd: Math.abs(Number(q.get("currency") ?? "0")),
+      points: reward || null,
+      sigOk: trSigOk(u.toString().replace(/^http:/, "https:"), q.get("hash") ?? ""),
+    };
+  }
+
   return null;
 }
 
+async function trEventWebhook(req: Request): Promise<Response> {
+  const u = new URL(req.url);
+  if ((u.searchParams.get("net") ?? "").toLowerCase() !== "theoremreach_event") return out(405, "method not allowed");
+  const xff = (req.headers.get("cf-connecting-ip") ?? req.headers.get("x-forwarded-for") ?? "").split(",")[0].trim().toLowerCase();
+  const ipHash = xff ? sha256("ip:" + xff).slice(0, 32) : "unknown";
+  const rej = async (code: number, reason: string) => {
+    await db.from("postback_rejects").insert({ ip_hash: ipHash, reason, txn: "" });
+    return out(code, "rejected");
+  };
+  if (!trSigOk(u.toString().replace(/^http:/, "https:"), u.searchParams.get("hash") ?? "")) return await rej(403, "bad_signature");
+  const body = await req.json().catch(() => null) as any;
+  const d = body?.data ?? body;
+  if (!d || typeof d !== "object") return await rej(400, "bad_body");
+  if (d.event_type !== "reversal") return out(200, "ok"); // bans are not credited or reversed here
+  const user = String(d.user_id ?? "").toLowerCase();
+  if (!UUID_RE.test(user)) return await rej(400, "bad_user");
+  const list = Array.isArray(d.reversed_transactions) ? d.reversed_transactions.slice(0, 50) : [];
+  for (const t of list) {
+    const txn = String(t?.transaction_id ?? "");
+    if (!TXN_RE.test(txn)) continue;
+    const usd = Math.abs(Number(t?.amount_in_dollars ?? "0"));
+    const pts = Math.abs(Math.trunc(Number(t?.amount_in_currency ?? "0")));
+    if (!Number.isFinite(usd) || usd > 1000) continue;
+    const { error } = await db.rpc("apply_offerwall_postback", {
+      p_network: "TheoremReach", p_txn: txn, p_type: "reversal", p_status: 2, p_user: user,
+      p_usd: usd, p_points_override: pts || null, p_raw: { event: "reversal", ip_hash: ipHash }, p_offer_name: null, p_started_at: null,
+    });
+    if (error) { console.error("rpc error", error.message); return out(500, "error"); }
+  }
+  return out(200, "ok");
+}
+
 Deno.serve(async (req) => {
+  if (req.method === "POST") return await trEventWebhook(req);
   if (req.method !== "GET") return out(405, "method not allowed");
   const xff = (req.headers.get("cf-connecting-ip") ?? req.headers.get("x-forwarded-for") ?? "").split(",")[0].trim().toLowerCase();
   const ipHash = xff ? sha256("ip:" + xff).slice(0, 32) : "unknown";
@@ -131,12 +262,16 @@ Deno.serve(async (req) => {
   const q = u.searchParams;
 
   // 1. Check secret URL token
-  if (!safeEq(q.get("k") ?? "", GLOBAL_TOKEN)) return await reject(403, "bad_token");
+  // PubScale and MobiVortex cannot carry the custom token; they are authenticated by their mandatory signature only.
+  if ((q.get("net") ?? "").toLowerCase() !== "pubscale" && (q.get("net") ?? "").toLowerCase() !== "mobivortex" && (q.get("net") ?? "").toLowerCase() !== "theoremreach" && !safeEq(q.get("k") ?? "", GLOBAL_TOKEN)) return await reject(403, "bad_token");
 
   // 2. Parse network adapter
   const net = (q.get("net") ?? "cpx").toLowerCase();
   const parsed = parseNetwork(net, u);
   if (!parsed) return await reject(400, "unknown_network");
+
+  // TheoremReach debug/test callbacks must never credit anyone.
+  if (net === "theoremreach" && (q.get("debug") ?? "").toLowerCase() === "true") return out(200, "ok");
 
   // Optional IP allowlist for CPX
   if (net === "cpx") {
@@ -154,6 +289,7 @@ Deno.serve(async (req) => {
   delete raw.k;
   delete raw.hash;
   delete raw.sig;
+  delete raw.signature;
 
   const { data, error } = await db.rpc("apply_offerwall_postback", {
     p_network: parsed.partnerName,
@@ -164,6 +300,8 @@ Deno.serve(async (req) => {
     p_usd: parsed.usd,
     p_points_override: parsed.points,
     p_raw: { ...raw, ip_hash: ipHash },
+    p_offer_name: (q.get("offer_name") || q.get("campaign_name") || q.get("offer") || "").slice(0, 120) || null,
+    p_started_at: null,
   });
 
   if (error) {
@@ -173,3 +311,4 @@ Deno.serve(async (req) => {
   if (data === "unknown_user") return await reject(400, "unknown_user", parsed.txn);
   return out(200, "ok");
 });
+
