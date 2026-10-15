@@ -415,6 +415,7 @@ document.getElementById('dtabs').addEventListener('click', e => {
 });
 
 async function openCpxWall() {
+  if (!(await permitPartner('CPX Research'))) return;
   const viewer = document.getElementById('wall-viewer');
   const wrap = document.getElementById('svwrap');
   viewer.hidden = false;
@@ -441,6 +442,7 @@ async function openCpxWall() {
 
 const WANNADS_KEY = '6acf5c682e699850934364';
 async function openWannadsWall() {
+  if (!(await permitPartner('Wannads'))) return;
   const viewer = document.getElementById('wall-viewer');
   const wrap = document.getElementById('svwrap');
   document.getElementById('wall-title').textContent = 'Wannads Offerwall';
@@ -467,6 +469,7 @@ async function openWannadsWall() {
 
 const PUBSCALE_APP = '70593673';
 async function openPubscaleWall() {
+  if (!(await permitPartner('PubScale'))) return;
   const viewer = document.getElementById('wall-viewer');
   const wrap = document.getElementById('svwrap');
   document.getElementById('wall-title').textContent = 'PubScale Offerwall';
@@ -493,6 +496,7 @@ async function openPubscaleWall() {
 
 const MOBIVORTEX_PLACEMENT = '6acf60a3b8a42db09a09881d';
 async function openMobivortexWall() {
+  if (!(await permitPartner('MobiVortex'))) return;
   const viewer = document.getElementById('wall-viewer');
   const wrap = document.getElementById('svwrap');
   document.getElementById('wall-title').textContent = 'MobiVortex Offerwall';
@@ -555,7 +559,7 @@ document.getElementById('dash').addEventListener('click', async e => {
       const r = await rpc('claim_offer', { p_offer: d.claim });
       if (r) {
         const h = localStorage.getItem('qf_d');
-        guard({ action: 'monitor', hash: h ? await sha('qf|' + h) : '', fp: fpParts() }).catch(() => {});
+        if (!privacyGpc() && privacyChoice().fingerprinting) guard({ action: 'monitor', hash: h ? await sha('qf|' + h) : '', fp: {} }).catch(() => {});
       }
       return r;
     }, 'Task started!', true);
@@ -692,35 +696,24 @@ async function guard(body) {
   return r.json().catch(() => ({}));
 }
 
-function fpParts() {
-  let gpu = '';
-  try {
-    const c = document.createElement('canvas'), g = c.getContext('webgl'), e = g && g.getExtension('WEBGL_debug_renderer_info');
-    gpu = e ? String(g.getParameter(e.UNMASKED_RENDERER_WEBGL)).slice(0, 80) : '';
-    const lc = g && g.getExtension('WEBGL_lose_context'); if (lc) lc.loseContext();
-  } catch (_) {}
-  return {
-    screen: screen.width + 'x' + screen.height + 'x' + (window.devicePixelRatio || 1),
-    tz: Intl.DateTimeFormat().resolvedOptions().timeZone || '',
-    lang: navigator.language || '',
-    cores: navigator.hardwareConcurrency || 0,
-    mem: navigator.deviceMemory || 0,
-    gpu,
-    platform: (navigator.platform || '').slice(0, 40),
-    touch: navigator.maxTouchPoints || 0
-  };
+function privacyChoice() {
+  try { return JSON.parse(localStorage.getItem('qf_privacy') || '{}'); } catch (_) { return {}; }
 }
-
+const privacyGpc = () => navigator.globalPrivacyControl === true;
+function fpParts() { return {}; } // Detailed hardware/GPU fingerprinting removed.
 async function regDevice() {
+  // No persistent device identifier or fingerprint without a recorded opt-in.
+  const c = privacyChoice();
+  if (privacyGpc() || !c.fingerprinting) return;
   try {
+    await rpc('my_privacy_choices', {p_fp:true,p_partners:c.partners||{},p_gpc:false});
     let id = localStorage.getItem('qf_d');
-    if (!id) { id = crypto.randomUUID(); localStorage.setItem('qf_d', id); }
-    const h = await sha('qf|' + id);
-    await rpc('register_device', { p_hash: h });
-    await guard({ action: 'register', hash: h, fp: fpParts() });
+    if (!id) { id = crypto.randomUUID(); localStorage.setItem('qf_d',id); }
+    const h=await sha('qf|'+id);
+    await rpc('register_device',{p_hash:h});
+    await guard({action:'register',hash:h,fp:{}});
   } catch (_) {}
 }
-
 async function sendVerify() {
   try {
     const t = await tok();
@@ -855,3 +848,43 @@ document.addEventListener('pointerdown', e => {
   });
   document.body.appendChild(b);
 })();
+
+// Privacy choices are separate from acceptance of the service terms.
+async function persistPrivacy(c) {
+  localStorage.setItem('qf_privacy',JSON.stringify(c));
+  if (!c.fingerprinting || privacyGpc()) localStorage.removeItem('qf_d');
+  if (S) await rpc('my_privacy_choices',{p_fp:!!c.fingerprinting,p_partners:c.partners||{},p_gpc:privacyGpc()});
+}
+function privacyPanel() {
+  let dlg=document.getElementById('privacy-dialog');
+  if (!dlg) {
+    dlg=document.createElement('dialog');dlg.id='privacy-dialog';
+    dlg.innerHTML=`<form method="dialog"><h2>Privacy choices</h2><p>Essential sign-in, security and reward records are always used to run the service. Optional tracking stays off unless you choose it.</p><label><input type="checkbox" id="privacy-device"> Allow a random device identifier for duplicate-account checks. Detailed hardware/GPU fingerprinting is not collected.</label><p>Offer partners are enabled separately when you launch them. You can reject all optional processing without losing access to your account.</p><p id="privacy-gpc-note"></p><div class="privacy-actions"><button value="reject" class="btn ghost">Reject optional</button><button value="save" class="btn">Save choices</button></div></form>`;
+    document.body.append(dlg);
+    dlg.addEventListener('close',async()=>{
+      if (!['reject','save'].includes(dlg.returnValue)) return;
+      const c={version:'2026-10-15',updated_at:new Date().toISOString(),fingerprinting:dlg.returnValue==='save'&&document.getElementById('privacy-device').checked&&!privacyGpc(),partners:{}};
+      document.getElementById('svwrap').replaceChildren();document.getElementById('wall-viewer').hidden=true;
+      try {await persistPrivacy(c);if(c.fingerprinting)await regDevice();toast('Privacy choices saved');}catch(_){toast('Saved on this browser. Sign in again to sync account choices.');}
+    });
+  }
+  const box=document.getElementById('privacy-device');box.checked=!!privacyChoice().fingerprinting&&!privacyGpc();box.disabled=privacyGpc();
+  document.getElementById('privacy-gpc-note').textContent=privacyGpc()?'Global Privacy Control is on. Optional identifiers and partner launches are blocked.':'';
+  dlg.returnValue='';dlg.showModal();
+}
+async function permitPartner(name) {
+  if(privacyGpc()){toast('Global Privacy Control blocks optional partner tracking.');return false;}
+  let c=privacyChoice();
+  if(c.partners&&c.partners[name])return true;
+  // A distinct, affirmative choice for each provider. Cancel never loads its frame.
+  const agree=(await askNote('Type ENABLE to consent: '+'Enable '+name+'? Your account tracking ID and browser/IP will be shared with this provider. It may use cookies or tracking and collect information you enter. Read its privacy policy on the partner site before giving sensitive answers. Cancel keeps it blocked. You can withdraw in Privacy choices.'))==='ENABLE';
+  if(!agree)return false;
+  c={...c,version:'2026-10-15',updated_at:new Date().toISOString(),partners:{...(c.partners||{}),[name]:true}};
+  try{await persistPrivacy(c);return true;}catch(_){toast('Could not record consent. Partner stays blocked.');return false;}
+}
+document.getElementById('privacy-choices').onclick=privacyPanel;
+document.getElementById('privacy-export').onclick=async()=>{try{const d=await rpc('my_privacy_export');const b=new Blob([JSON.stringify(d,null,2)],{type:'application/json'});const u=URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download='quantumfinai-my-data.json';a.click();setTimeout(()=>URL.revokeObjectURL(u),5000);}catch(e){toast(e.message||'Export failed');}};
+document.getElementById('privacy-correct').onclick=async()=>{const name=await askNote('Correct your display name (1-100 characters):');if(!name)return;try{await rpc('my_privacy_correct',{p_name:name.trim()});await loadDash();toast('Name updated');}catch(e){toast(e.message||'Correction failed');}};
+document.getElementById('privacy-delete').onclick=async()=>{if((await askNote('Permanently delete your account and personal data? Download your data first. Reward accounting rows are de-linked, not removed. Pending withdrawals need support. Type DELETE to confirm:'))!=='DELETE')return;try{await rpc('my_privacy_delete',{p_confirm:'DELETE'});localStorage.removeItem('qf_d');localStorage.removeItem('qf_privacy');signOut();toast('Account deleted');}catch(e){toast(e.message||'Deletion failed. Contact support.');}};
+if(privacyGpc()) { localStorage.removeItem('qf_d');persistPrivacy({version:'2026-10-15',fingerprinting:false,partners:{},gpc:true}).catch(()=>{}); }
+if(!privacyChoice().version) privacyPanel();
