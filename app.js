@@ -247,6 +247,8 @@ function drawWallPartners(nets) {
           ? `<button class="btn small" type="button" data-open-mooffers="1">Launch Offerwall</button>`
           : n.name === 'TheoremReach' && n.status === 'partner'
           ? `<button class="btn small" type="button" data-open-theoremreach="1">Launch Offerwall</button>`
+          : n.name === 'Tapjoy' && n.status === 'partner'
+          ? `<button class="btn small" type="button" data-open-tapjoy="1">Launch Offerwall</button>`
           : `<button class="btn small ghost" type="button" disabled>Coming Soon</button>`}
       </article>`;
   };
@@ -643,6 +645,37 @@ async function openTheoremreachWall() {
   }
 }
 
+const TAPJOY_SDK_KEY = 'tvsnfMx4SSC6WQhOKn3ZmwECVRljViOlBb6WQLHt13grirPizERRA3c-n-DD';
+let tjScriptLoading = null;
+function tapjoyLoad() {
+  window.Tapjoy = window.Tapjoy || function () { (window.Tapjoy.q = window.Tapjoy.q || []).push(arguments); };
+  if (!tjScriptLoading) {
+    tjScriptLoading = new Promise((resolve, reject) => {
+      const sc = document.createElement('script');
+      sc.async = true;
+      sc.src = 'https://rewards.unity.com/owp/web/sdk/latest';
+      sc.onload = () => resolve();
+      sc.onerror = () => { tjScriptLoading = null; reject(new Error('Tapjoy Offerwall could not be loaded.')); };
+      document.head.appendChild(sc);
+    });
+  }
+  return tjScriptLoading;
+}
+async function openTapjoyWall() {
+  if (!(await permitPartner('Tapjoy'))) return;
+  try {
+    const k = await tok();
+    if (!k) throw new Error('Please sign in again.');
+    const uid = JSON.parse(atob(k.split('.')[1].replace(/-/g, '+').replace(/_/g, '/'))).sub;
+    if (!/^[0-9a-f-]{36}$/i.test(uid || '')) throw new Error('Offerwall is temporarily unavailable.');
+    toast('Loading Tapjoy Offerwall...');
+    await tapjoyLoad();
+    window.Tapjoy('init', { sdkKey: TAPJOY_SDK_KEY, publisherUserId: uid, eventName: '#WebOfferwall' });
+    window.Tapjoy('showOfferwall', {});
+  } catch (e) { toast(e.message); }
+}
+
+
 document.getElementById('wall-close').addEventListener('click', () => {
   document.getElementById('wall-viewer').hidden = true;
   document.getElementById('svwrap').innerHTML = '';
@@ -680,6 +713,7 @@ document.getElementById('dash').addEventListener('click', async e => {
   if (d.openOffery) { openOfferyWall(); return; }
   if (d.openMooffers) { openMooffersWall(); return; }
   if (d.openTheoremreach) { openTheoremreachWall(); return; }
+  if (d.openTapjoy) { openTapjoyWall(); return; }
   if (d.claim) {
     run(async () => {
       const r = await rpc('claim_offer', { p_offer: d.claim });
