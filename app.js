@@ -598,8 +598,13 @@ async function openMooffersWall() {
     if (!k) throw new Error('Please sign in again.');
     const uid = JSON.parse(atob(k.split('.')[1].replace(/-/g, '+').replace(/_/g, '/'))).sub;
     if (!/^[0-9a-f-]{36}$/i.test(uid || '')) throw new Error('Offerwall is temporarily unavailable.');
+    // Cloudflare derives loc from this visitor's request IP. Never use the app's US default.
+    const geo = await fetch('/cdn-cgi/trace', { cache: 'no-store', credentials: 'omit', signal: AbortSignal.timeout(8000) });
+    if (!geo.ok) throw new Error('Could not verify your country. Please try again.');
+    const country = (await geo.text()).match(/^loc=([A-Z]{2})$/m)?.[1];
+    if (!country || country === 'XX' || country === 'T1') throw new Error('Could not verify your country. Please try again.');
     const f = document.createElement('iframe');
-    f.src = 'https://wall.mooffers.com/offerwall/' + MOOFFERS_APP_ID + '?uid=' + uid.replace(/-/g, '') + '&platform=web&country=US&source=quantumfinai';
+    f.src = 'https://wall.mooffers.com/offerwall/' + MOOFFERS_APP_ID + '?uid=' + uid.replace(/-/g, '') + '&platform=web&country=' + encodeURIComponent(country) + '&source=quantumfinai';
     f.title = 'Mooffers Offerwall';
     f.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox');
     f.referrerPolicy = 'no-referrer';
