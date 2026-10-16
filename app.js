@@ -221,10 +221,11 @@ function drawWallPartners(nets) {
   const sect = t => `<h3 class="wall-sect">${t}</h3>`;
   const card = n => {
     const isLive = isLiveNet(n);
+    const isWide = !!(window.NET_LOGOS_WIDE && window.NET_LOGOS_WIDE[n.name]);
     return `
       <article class="wall-card ${isLive ? 'live' : ''}">
         <div class="wall-head">
-          <div class="wall-logo">${(window.NET_LOGOS && window.NET_LOGOS[n.name]) ? `<img src="${window.NET_LOGOS[n.name]}" alt="${esc(n.name)} logo" width="40" height="40" style="width:40px;height:40px;object-fit:contain;border-radius:10px;background:#fff">` : esc(n.name.slice(0, 2).toUpperCase())}</div>
+          <div class="wall-logo${isWide ? ' wall-logo-wide' : ''}">${(window.NET_LOGOS && window.NET_LOGOS[n.name]) ? `<img src="${window.NET_LOGOS[n.name]}" alt="${esc(n.name)} logo" width="${isWide ? 88 : 40}" height="40" style="width:${isWide ? 88 : 40}px;height:40px;object-fit:contain;border-radius:10px;background:${isWide ? '#0a0f1e' : '#fff'}">` : esc(n.name.slice(0, 2).toUpperCase())}</div>
           <div>
             <h3 style="margin:0;font-size:17px">${esc(n.name)}</h3>
             <span class="tag">${isLive ? '✓ Live Now' : 'Integrating Soon'}</span>
