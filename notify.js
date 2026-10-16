@@ -7,7 +7,7 @@
   var reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   var css = '' +
-  '#qf-notes{position:fixed;top:16px;right:16px;z-index:99999;display:flex;flex-direction:column;gap:12px;width:min(360px,calc(100vw - 24px));pointer-events:none}' +
+  '#qf-notes{position:fixed;top:74px;right:16px;z-index:99999;display:flex;flex-direction:column;gap:12px;width:min(360px,calc(100vw - 24px));pointer-events:none}' +
   '.qfn{pointer-events:auto;position:relative;overflow:hidden;border-radius:18px;padding:16px 18px 18px;color:#fff;font-family:inherit;' +
   'background:linear-gradient(135deg,rgba(24,22,56,.96),rgba(10,16,34,.96));border:1px solid rgba(124,108,255,.45);' +
   'box-shadow:0 18px 50px rgba(0,0,0,.55),0 0 0 1px rgba(34,211,238,.12),0 0 40px rgba(91,77,255,.28);backdrop-filter:blur(14px);' +
@@ -24,7 +24,7 @@
   '.qfn-pts{font-size:26px;font-weight:800;line-height:1.15;background:linear-gradient(90deg,#c4b5fd,#67e8f9);-webkit-background-clip:text;background-clip:text;color:transparent}' +
   '.qfn-pts small{font-size:13px;font-weight:600;color:#cbd5e1;-webkit-text-fill-color:#cbd5e1;margin-left:6px}' +
   '.qfn-d{font-size:13px;color:#cbd5e1;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}' +
-  '.qfn-x{position:absolute;top:-6px;right:-8px;background:none;border:0;color:#94a3b8;font-size:18px;cursor:pointer;padding:4px 8px;line-height:1}' +
+  '.qfn-x{position:absolute;top:4px;right:6px;z-index:2;background:none;border:0;color:#94a3b8;font-size:18px;cursor:pointer;padding:4px 8px;line-height:1}' +
   '.qfn-x:hover{color:#fff}' +
   '.qfn-push{display:inline-block;margin-top:10px;font-size:12px;color:#67e8f9;background:none;border:1px solid rgba(103,232,249,.4);border-radius:999px;padding:5px 12px;cursor:pointer;position:relative}' +
   '.qfn-bar{position:absolute;left:0;bottom:0;height:3px;width:100%;background:linear-gradient(90deg,#5b4dff,#22d3ee);transform-origin:left;animation:qfbar linear forwards}' +
@@ -32,8 +32,8 @@
   '.qfn-spark{position:absolute;width:5px;height:5px;border-radius:50%;background:#fde68a;left:38px;top:34px;opacity:0;animation:qfspark 1s ease-out forwards}' +
   '@keyframes qfspark{0%{opacity:1;transform:translate(0,0)}100%{opacity:0;transform:translate(var(--dx),var(--dy))}}' +
   '@media (prefers-reduced-motion:reduce){.qfn,.qfn:before,.qfn.on .qfn-coin,.qfn-spark{animation:none!important;transition:opacity .2s!important;transform:none}.qfn:not(.on){opacity:0}}' +
-  '@media (max-width:520px){#qf-notes{top:10px;right:12px;left:12px;width:auto}}' +
-  '.qf-pn{margin-bottom:20px}.qf-pn .row{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}.qf-pn .st-msg{margin-top:10px;font-size:13px;color:#94a3b8;min-height:18px}';
+  '@media (max-width:520px){#qf-notes{top:70px;right:12px;left:12px;width:auto}}' +
+  '.qf-pn{margin-bottom:20px}.qf-pn .qf-row{display:flex!important;justify-content:flex-start!important;gap:10px;flex-wrap:wrap;margin-top:12px}.qf-pn .st-msg{margin-top:10px;font-size:13px;color:#94a3b8;min-height:18px}';
   var st = document.createElement('style'); st.textContent = css; document.head.appendChild(st);
   var box = document.createElement('div'); box.id = 'qf-notes'; box.setAttribute('aria-live', 'polite'); document.body.appendChild(box);
 
@@ -127,7 +127,7 @@
   function card() {
     var host = document.getElementById('d-profile'); if (!host || document.getElementById('qf-pn')) return;
     var c = document.createElement('section'); c.id = 'qf-pn'; c.className = 'prof-card qf-pn';
-    c.innerHTML = '<h3>Credit notifications</h3><p class="note">When an offer is credited you see a pop-up here. You can also get a browser notification when the tab is closed. We store your browser\u2019s push address with your account only for this, and you can turn it off at any time.</p><div class="row"><button type="button" class="btn small" id="qf-pn-t"></button><button type="button" class="btn small ghost" id="qf-pn-prev">Preview pop-up</button><button type="button" class="btn small ghost" id="qf-pn-test" hidden>Send test alert</button></div><div class="st-msg" id="qf-pn-m"></div>';
+    c.innerHTML = '<h3>Credit notifications</h3><p class="note">When an offer is credited you see a pop-up here. You can also get a browser notification when the tab is closed. We store your browser\u2019s push address with your account only for this, and you can turn it off at any time.</p><div class="qf-row"><button type="button" class="btn small" id="qf-pn-t"></button><button type="button" class="btn small ghost" id="qf-pn-prev">Preview pop-up</button><button type="button" class="btn small ghost" id="qf-pn-test" hidden>Send test alert</button></div><div class="st-msg" id="qf-pn-m"></div>';
     host.insertBefore(c, host.firstChild); paint();
     var m = c.querySelector('#qf-pn-m');
     c.querySelector('#qf-pn-prev').onclick = function () { show({ delta: 1250, network: 'Preview', offer: 'Sample offer (no points added)' }); };
