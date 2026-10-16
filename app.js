@@ -241,6 +241,8 @@ function drawWallPartners(nets) {
           ? `<button class="btn small" type="button" data-open-mobivortex="1">Launch Offerwall</button>`
           : n.name === 'ayeT-Studios' && n.status === 'partner'
           ? `<button class="btn small" type="button" data-open-ayet="1">Launch Offerwall</button>`
+          : n.name === 'Offery' && n.status === 'partner'
+          ? `<button class="btn small" type="button" data-open-offery="1">Launch Offerwall</button>`
           : n.name === 'TheoremReach' && n.status === 'partner'
           ? `<button class="btn small" type="button" data-open-theoremreach="1">Launch Offerwall</button>`
           : `<button class="btn small ghost" type="button" disabled>Coming Soon</button>`}
@@ -553,6 +555,33 @@ async function openAyetWall() {
   }
 }
 
+const OFFERY_KEY = 'xfohrcewl9jp4kkl6wxt0lnl61dguf';
+async function openOfferyWall() {
+  if (!(await permitPartner('Offery'))) return;
+  const viewer = document.getElementById('wall-viewer');
+  const wrap = document.getElementById('svwrap');
+  document.getElementById('wall-title').textContent = 'Offery Offerwall';
+  viewer.hidden = false;
+  wrap.innerHTML = `<p class="note" style="padding:24px;text-align:center">Loading Offery Offerwall...</p>`;
+  viewer.scrollIntoView({ behavior: 'smooth' });
+  try {
+    const k = await tok();
+    if (!k) throw new Error('Please sign in again.');
+    const uid = JSON.parse(atob(k.split('.')[1].replace(/-/g, '+').replace(/_/g, '/'))).sub;
+    if (!/^[0-9a-f-]{36}$/i.test(uid || '')) throw new Error('Offerwall is temporarily unavailable.');
+    const f = document.createElement('iframe');
+    f.src = 'https://offery.io/offerwall/' + OFFERY_KEY + '/' + uid.replace(/-/g, '');
+    f.title = 'Offery Offerwall';
+    f.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox');
+    f.referrerPolicy = 'no-referrer';
+    f.loading = 'lazy';
+    f.style.cssText = 'width:100%;height:calc(100dvh - 130px);min-height:560px;border:0;background:#fff;display:block';
+    wrap.replaceChildren(f);
+  } catch (e) {
+    wrap.innerHTML = `<p class="note" style="padding:24px;color:#fca5a5">${esc(e.message)}</p>`;
+  }
+}
+
 const THEOREMREACH_KEY = '685a6270df6d7ebb59ce133835c0';
 async function openTheoremreachWall() {
   if (!(await permitPartner('TheoremReach'))) return;
@@ -614,6 +643,7 @@ document.getElementById('dash').addEventListener('click', async e => {
   if (d.openPubscale) { openPubscaleWall(); return; }
   if (d.openMobivortex) { openMobivortexWall(); return; }
   if (d.openAyet) { openAyetWall(); return; }
+  if (d.openOffery) { openOfferyWall(); return; }
   if (d.openTheoremreach) { openTheoremreachWall(); return; }
   if (d.claim) {
     run(async () => {
