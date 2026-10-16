@@ -216,3 +216,5 @@ button.mcard{font:inherit;color:inherit;text-align:left;width:100%;cursor:pointe
 .btn.busy{opacity:.55;cursor:progress}
 
 #privacy-dialog{max-width:560px;width:calc(100% - 32px);max-height:85dvh;overflow:auto;background:#10182b;color:#e7edf7;border:1px solid #47617e;border-radius:16px;padding:24px}#privacy-dialog::backdrop{background:#000a}#privacy-dialog p,#privacy-dialog label{line-height:1.65}#privacy-dialog input{width:18px;height:18px;display:inline-block;margin-right:8px}.privacy-actions{display:flex;flex-wrap:wrap;gap:12px;margin-top:18px}.privacy-fixed{position:fixed;bottom:14px;left:14px;z-index:90;background:#10182b}
+
+.wall-logo.wall-logo-wide{width:96px}
