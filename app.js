@@ -128,6 +128,7 @@ document.querySelectorAll('#account .tabs .tab').forEach(b => b.addEventListener
   document.getElementById('ftitle').textContent = mode === 'signup' ? 'Create an account' : 'Sign in';
   document.getElementById('consent-row').style.display = mode === 'signup' ? 'flex' : 'none';
   document.getElementById('legal-consent').required = mode === 'signup';
+  document.getElementById('device-row').style.display = mode === 'signup' ? 'flex' : 'none';
   authForm.pw.autocomplete = mode === 'signup' ? 'new-password' : 'current-password';
   tsReset('tsauth');
 }));
@@ -139,6 +140,8 @@ authForm.addEventListener('submit', async e => {
   }
   if (mode === 'signup' && !authForm.name.value.trim()) { say('Name is required'); return; }
   if (mode === 'signup' && !document.getElementById('legal-consent').checked) { say('Please agree to the Terms of Service and acknowledge the Privacy Policy'); return; }
+  if (mode === 'signup' && privacyGpc()) { say('Your browser sends Global Privacy Control, which turns off the device check that sign-up needs to prevent duplicate accounts. Switch it off for quantumfinai.me and try again, or email youssef@quantumfinai.me.'); return; }
+  if (mode === 'signup' && !document.getElementById('device-consent').checked) { say('Please allow the one-time device check. It is required to create an account (one account per person).'); return; }
   const cap = mode === 'signup' ? tsToken('tsauth') : '';
   if (mode === 'signup' && !cap) { say('Please complete the human check first'); return; }
 
@@ -150,6 +153,7 @@ authForm.addEventListener('submit', async e => {
   say('One moment…', true);
   try {
     if (mode === 'signup') {
+      const dev = await signupDevice();
       const abort = new AbortController();
       const slowTimer = setTimeout(() => abort.abort(), 30000);
       let sr;
@@ -157,7 +161,7 @@ authForm.addEventListener('submit', async e => {
         sr = await fetch(SB_URL + '/functions/v1/signup', {
           method: 'POST',
           headers: { apikey: SB_KEY, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: authForm.email.value, password: authForm.pw.value, name: authForm.name.value.trim(), token: cap, consent: true, policy_version: "2026-10-18" }),
+          body: JSON.stringify({ email: authForm.email.value, password: authForm.pw.value, name: authForm.name.value.trim(), token: cap, consent: true, policy_version: "2026-10-18", device_check: true, device_hash: dev.device_hash, fingerprint_hash: dev.fingerprint_hash, fp: dev.fp }),
           signal: abort.signal
         });
       } finally { clearTimeout(slowTimer); }
@@ -170,6 +174,8 @@ authForm.addEventListener('submit', async e => {
         if (!r2.ok) throw d2;
         setSess(d2);
       }
+      // The server recorded the sign-up device check and the opt-in for this account; mirror it locally.
+      try { localStorage.setItem('qf_privacy', JSON.stringify({ ...privacyChoice(), version: '2026-10-18', fingerprinting: true, updated_at: new Date().toISOString() })); } catch (_) {}
       enter(); sendVerify();
     } else {
       const [r, d] = await sb('/auth/v1/token?grant_type=password', { email: authForm.email.value, password: authForm.pw.value });
@@ -860,6 +866,27 @@ document.getElementById('pbform').addEventListener('submit', e => {
 async function sha(s) {
   const b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s));
   return [...new Uint8Array(b)].map(x => x.toString(16).padStart(2, '0')).join('');
+}
+
+// One-time sign-up device check: runs only after the member ticked the explicit box on the form.
+async function signupDevice() {
+  let id = localStorage.getItem('qf_d');
+  if (!id) { id = crypto.randomUUID(); localStorage.setItem('qf_d', id); }
+  const device_hash = await sha('qf|' + id);
+  let d = {};
+  try { if (window.FraudGuard) d = window.FraudGuard.getReport().device || {}; } catch (_) {}
+  return {
+    device_hash,
+    fingerprint_hash: String(d.fingerprintHash || ''),
+    fp: {
+      screen: (d.screenW && d.screenH) ? d.screenW + 'x' + d.screenH : '',
+      tz: d.timezone || '',
+      cores: (typeof d.hardwareConcurrency === 'number') ? d.hardwareConcurrency : null,
+      mem: (typeof d.deviceMemory === 'number') ? d.deviceMemory : null,
+      gpu: (d.webgl && d.webgl.renderer) ? String(d.webgl.renderer).slice(0, 120) : '',
+      platform: d.platform || ''
+    }
+  };
 }
 
 async function guard(body) {
