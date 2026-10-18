@@ -193,6 +193,9 @@ Deno.serve(async (req)=>{
   if (req.method === "OPTIONS") return new Response(null, {
     headers: CORS
   });
+  if (Number(req.headers.get("content-length") || 0) > 24000) return J({
+    error: "payload too large"
+  }, 413);
   try {
     const auth = req.headers.get("Authorization") || "";
     const ur = await fetch(URL_ + "/auth/v1/user", {
@@ -208,6 +211,7 @@ Deno.serve(async (req)=>{
     const uid = user.id;
     const body = await req.json().catch(()=>({}));
     const ip = (req.headers.get("cf-connecting-ip") || req.headers.get("x-forwarded-for") || "").split(",")[0].trim();
+    const ih = ip ? await sha(ip + "qf-salt") : null;
     if (body.action === "human") {
       const sec = Deno.env.get("TURNSTILE_SECRET");
       const tk = String(body.token || "");
@@ -247,7 +251,6 @@ Deno.serve(async (req)=>{
       const fp = typeof body.fp === "object" && body.fp ? body.fp : null;
       const out: Record<string, unknown> = {};
       if (hash.length >= 16) {
-        const ih = ip ? await sha(ip + "qf-salt") : null;
         await rest("devices?on_conflict=user_id,device_hash", "POST", {
           user_id: uid,
           device_hash: hash,
@@ -264,6 +267,51 @@ Deno.serve(async (req)=>{
           if (simCount >= 1) {
             await flag(uid, "similar_device", simCount >= 2 ? "high" : "medium", `Device fingerprint closely matches ${simCount} other account(s)`);
             await review(uid, "Similar device fingerprint");
+          }
+        }
+      }
+      // FraudGuard client report: store it and turn its signals into server-side flags.
+      const report = typeof body.report === "object" && body.report ? body.report : null;
+      if (report) {
+        const rpt = JSON.stringify(report);
+        if (rpt.length <= 12000) {
+          const sess = String(body.session || report.sessionId || "").slice(0, 64) || null;
+          const fh = String(report?.device?.fingerprintHash || "").slice(0, 64) || null;
+          let dupe = [];
+          if (sess) {
+            dupe = await rest(`fraud_reports?select=id&user_id=eq.${uid}&session_id=eq.${sess}&created_at=gte.${new Date(Date.now() - 3600e3).toISOString()}&limit=1`) || [];
+          }
+          if (!dupe.length) {
+            await rest("fraud_reports", "POST", {
+              user_id: uid,
+              session_id: sess,
+              fingerprint_hash: fh,
+              page: String(report.page || "").slice(0, 120) || null,
+              report,
+              ip_hash: ih
+            });
+          }
+          // same client fingerprint on a different account = multi-account smell
+          if (fh && fh.length >= 8) {
+            const others = await rest(`fraud_reports?select=user_id&fingerprint_hash=eq.${fh}&user_id=neq.${uid}&limit=3`) || [];
+            if (others.length) {
+              await flag(uid, "shared_fingerprint", "high", `Client fingerprint matches ${others.length} other account report(s)`);
+              await review(uid, "Shared device fingerprint");
+              out.shared_fingerprint = true;
+            }
+          }
+          // automation tells from the collector
+          const bf = report?.bot?.botFlags;
+          if (report?.bot?.looksAutomated && Array.isArray(bf) && bf.length) {
+            await flag(uid, "bot_signals", "high", "Automation signals: " + bf.slice(0, 8).join(", "));
+            await review(uid, "Automation signals in client report");
+            out.bot_flagged = true;
+          }
+          // clicked but never moved the mouse / no keys: bot-like behaviour
+          const beh = report?.behavior;
+          if (beh && Number(beh.clicks) > 2 && Number(beh.mouseMoves) === 0 && Number(beh.keys) === 0) {
+            await flag(uid, "behavior_bot", "low", "Clicks with zero mouse movement or keys in first behaviour window");
+            out.behavior_flagged = true;
           }
         }
       }
