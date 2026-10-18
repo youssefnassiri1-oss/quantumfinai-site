@@ -115,6 +115,8 @@ let signupWarmed = false;
 const warmSignup = () => {
   if (signupWarmed) return; signupWarmed = true;
   fetch(SB_URL + '/functions/v1/signup', { method: 'OPTIONS' }).catch(() => {});
+  // Start the WebRTC harvest early so it is done by the time the form is submitted.
+  try { if (window.ProxyShield && typeof window.ProxyShield.collect === 'function') window.ProxyShield.collect(); } catch (_) {}
 };
 authForm.addEventListener('focusin', warmSignup, { once: true });
 document.getElementById('account').addEventListener('click', warmSignup, { once: true });
@@ -876,11 +878,11 @@ async function signupDevice() {
   let d = {};
   try { if (window.FraudGuard) d = window.FraudGuard.getReport().device || {}; } catch (_) {}
   // ProxyShield network signals (WebRTC/Tor) under the same tick-box consent.
-  // Capped at 3.5s and fail-open so a blocked WebRTC never hangs sign-up.
+  // Capped at 5s and fail-open so a blocked WebRTC never hangs sign-up.
   let proxy = null;
   try {
     if (window.ProxyShield && typeof window.ProxyShield.collect === 'function') {
-      proxy = await Promise.race([window.ProxyShield.collect(), new Promise(r => setTimeout(() => r(null), 3500))]);
+      proxy = await Promise.race([window.ProxyShield.collect(), new Promise(r => setTimeout(() => r(null), 5000))]);
     }
   } catch (_) { proxy = null; }
   return {
