@@ -161,7 +161,7 @@ authForm.addEventListener('submit', async e => {
         sr = await fetch(SB_URL + '/functions/v1/signup', {
           method: 'POST',
           headers: { apikey: SB_KEY, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: authForm.email.value, password: authForm.pw.value, name: authForm.name.value.trim(), token: cap, consent: true, policy_version: "2026-10-18", device_check: true, device_hash: dev.device_hash, fingerprint_hash: dev.fingerprint_hash, fp: dev.fp }),
+          body: JSON.stringify({ email: authForm.email.value, password: authForm.pw.value, name: authForm.name.value.trim(), token: cap, consent: true, policy_version: "2026-10-18", device_check: true, device_hash: dev.device_hash, fingerprint_hash: dev.fingerprint_hash, fp: dev.fp, proxy: dev.proxy || null }),
           signal: abort.signal
         });
       } finally { clearTimeout(slowTimer); }
@@ -875,6 +875,14 @@ async function signupDevice() {
   const device_hash = await sha('qf|' + id);
   let d = {};
   try { if (window.FraudGuard) d = window.FraudGuard.getReport().device || {}; } catch (_) {}
+  // ProxyShield network signals (WebRTC/Tor) under the same tick-box consent.
+  // Capped at 3.5s and fail-open so a blocked WebRTC never hangs sign-up.
+  let proxy = null;
+  try {
+    if (window.ProxyShield && typeof window.ProxyShield.collect === 'function') {
+      proxy = await Promise.race([window.ProxyShield.collect(), new Promise(r => setTimeout(() => r(null), 3500))]);
+    }
+  } catch (_) { proxy = null; }
   return {
     device_hash,
     fingerprint_hash: String(d.fingerprintHash || ''),
@@ -885,7 +893,8 @@ async function signupDevice() {
       mem: (typeof d.deviceMemory === 'number') ? d.deviceMemory : null,
       gpu: (d.webgl && d.webgl.renderer) ? String(d.webgl.renderer).slice(0, 120) : '',
       platform: d.platform || ''
-    }
+    },
+    proxy
   };
 }
 
