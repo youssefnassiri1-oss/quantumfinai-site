@@ -150,11 +150,17 @@ authForm.addEventListener('submit', async e => {
   say('One moment…', true);
   try {
     if (mode === 'signup') {
-      const sr = await fetch(SB_URL + '/functions/v1/signup', {
-        method: 'POST',
-        headers: { apikey: SB_KEY, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: authForm.email.value, password: authForm.pw.value, name: authForm.name.value.trim(), token: cap, consent: true, policy_version: "2026-10-18" })
-      });
+      const abort = new AbortController();
+      const slowTimer = setTimeout(() => abort.abort(), 30000);
+      let sr;
+      try {
+        sr = await fetch(SB_URL + '/functions/v1/signup', {
+          method: 'POST',
+          headers: { apikey: SB_KEY, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: authForm.email.value, password: authForm.pw.value, name: authForm.name.value.trim(), token: cap, consent: true, policy_version: "2026-10-18" }),
+          signal: abort.signal
+        });
+      } finally { clearTimeout(slowTimer); }
       const sd = await sr.json().catch(() => ({}));
       if (!sr.ok) throw { msg: sd.error || 'Could not create the account' };
       if (sd.session && sd.session.access_token) {
@@ -171,6 +177,15 @@ authForm.addEventListener('submit', async e => {
       setSess(d); enter();
     }
   } catch (x) {
+    if (x && x.name === 'AbortError') {
+      // The sign-up answer was lost on the way: the account may already exist, so try signing in with the same details.
+      try {
+        const [ra, da] = await sb('/auth/v1/token?grant_type=password', { email: authForm.email.value, password: authForm.pw.value });
+        if (ra.ok) { setSess(da); enter(); return; }
+      } catch (_) {}
+      say('The request timed out. Your account may have been created - please try signing in.');
+      return;
+    }
     const t = (x && (x.msg || x.message)) || '';
     say(!t ? 'Connection error' : /Invalid login/i.test(t) ? 'Wrong email or password' : t);
   } finally {
