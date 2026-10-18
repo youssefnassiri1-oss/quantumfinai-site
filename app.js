@@ -153,7 +153,7 @@ authForm.addEventListener('submit', async e => {
       const sr = await fetch(SB_URL + '/functions/v1/signup', {
         method: 'POST',
         headers: { apikey: SB_KEY, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: authForm.email.value, password: authForm.pw.value, name: authForm.name.value.trim(), token: cap, consent: true, policy_version: "2026-10-15" })
+        body: JSON.stringify({ email: authForm.email.value, password: authForm.pw.value, name: authForm.name.value.trim(), token: cap, consent: true, policy_version: "2026-10-18" })
       });
       const sd = await sr.json().catch(() => ({}));
       if (!sr.ok) throw { msg: sd.error || 'Could not create the account' };
@@ -1039,8 +1039,8 @@ async function syncPrivacyChoices() {
       localStorage.setItem('qf_privacy',JSON.stringify({...local,partners,fingerprinting:!!local.fingerprinting&&!!remote.fingerprinting&&!privacyGpc()}));
       if(!privacyChoice().fingerprinting)localStorage.removeItem('qf_d');
     }
-    if(privacyGpc())await persistPrivacy({version:'2026-10-15',fingerprinting:false,partners:{},gpc:true});
-  } catch(_) { localStorage.setItem('qf_privacy',JSON.stringify({version:'2026-10-15',fingerprinting:false,partners:{}}));localStorage.removeItem('qf_d'); }
+    if(privacyGpc())await persistPrivacy({version:'2026-10-18',fingerprinting:false,partners:{},gpc:true});
+  } catch(_) { localStorage.setItem('qf_privacy',JSON.stringify({version:'2026-10-18',fingerprinting:false,partners:{}}));localStorage.removeItem('qf_d'); }
 }
 async function persistPrivacy(c) {
   localStorage.setItem('qf_privacy',JSON.stringify(c));
@@ -1051,11 +1051,11 @@ function privacyPanel() {
   let dlg=document.getElementById('privacy-dialog');
   if (!dlg) {
     dlg=document.createElement('dialog');dlg.id='privacy-dialog';
-    dlg.innerHTML=`<form method="dialog"><h2>Privacy choices</h2><p>Essential sign-in, security and reward records are always used to run the service. Optional tracking stays off unless you choose it.</p><label><input type="checkbox" id="privacy-device"> Allow a random device identifier for duplicate-account checks. Detailed hardware/GPU fingerprinting is not collected.</label><p>Offer partners are enabled separately when you launch them. You can reject all optional processing without losing access to your account.</p><p id="privacy-gpc-note"></p><div class="privacy-actions"><button value="reject" class="btn ghost">Reject optional</button><button value="save" class="btn">Save choices</button></div></form>`;
+    dlg.innerHTML=`<form method="dialog"><h2>Privacy choices</h2><p>Essential sign-in, security and reward records are always used to run the service. Optional tracking stays off unless you choose it.</p><label><input type="checkbox" id="privacy-device"> Allow device fingerprinting (a random device identifier plus browser, graphics and behaviour signals) for duplicate-account and abuse checks.</label><p>Offer partners are enabled separately when you launch them. You can reject all optional processing without losing access to your account.</p><p id="privacy-gpc-note"></p><div class="privacy-actions"><button value="reject" class="btn ghost">Reject optional</button><button value="save" class="btn">Save choices</button></div></form>`;
     document.body.append(dlg);
     dlg.addEventListener('close',async()=>{
       if (!['reject','save'].includes(dlg.returnValue)) return;
-      const c={version:'2026-10-15',updated_at:new Date().toISOString(),fingerprinting:dlg.returnValue==='save'&&document.getElementById('privacy-device').checked&&!privacyGpc(),partners:{}};
+      const c={version:'2026-10-18',updated_at:new Date().toISOString(),fingerprinting:dlg.returnValue==='save'&&document.getElementById('privacy-device').checked&&!privacyGpc(),partners:{}};
       document.getElementById('svwrap').replaceChildren();document.getElementById('wall-viewer').hidden=true;
       try {await persistPrivacy(c);if(c.fingerprinting)await regDevice();toast('Privacy choices saved');}catch(_){toast('Saved on this browser. Sign in again to sync account choices.');}
     });
@@ -1070,7 +1070,7 @@ async function permitPartner(name) {
   try {
     const c=privacyChoice();
     if(!(c.partners&&c.partners[name])){
-      persistPrivacy({...c,version:'2026-10-15',updated_at:new Date().toISOString(),partners:{...(c.partners||{}),[name]:true}}).catch(()=>{});
+      persistPrivacy({...c,version:'2026-10-18',updated_at:new Date().toISOString(),partners:{...(c.partners||{}),[name]:true}}).catch(()=>{});
     }
   } catch(_) {}
   return true;
@@ -1079,5 +1079,5 @@ if(document.getElementById('privacy-choices')) document.getElementById('privacy-
 if(document.getElementById('privacy-export')) document.getElementById('privacy-export').onclick=async()=>{try{const d=await rpc('my_privacy_export');d.privacy_choices=await rpc('my_privacy_get_choices');const b=new Blob([JSON.stringify(d,null,2)],{type:'application/json'});const u=URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download='quantumfinai-my-data.json';a.click();setTimeout(()=>URL.revokeObjectURL(u),5000);}catch(e){toast(e.message||'Export failed');}};
 if(document.getElementById('privacy-correct')) document.getElementById('privacy-correct').onclick=async()=>{const name=await askNote('Correct your display name (1-100 characters):');if(!name)return;try{await rpc('my_privacy_correct',{p_name:name.trim()});await loadDash();toast('Name updated');}catch(e){toast(e.message||'Correction failed');}};
 if(document.getElementById('privacy-delete')) document.getElementById('privacy-delete').onclick=async()=>{if((await askNote('Permanently delete your account and personal data? Download your data first. Reward accounting rows are de-linked, not removed. Pending withdrawals need support. Type DELETE to confirm:'))!=='DELETE')return;try{await rpc('my_privacy_delete',{p_confirm:'DELETE'});localStorage.removeItem('qf_d');localStorage.removeItem('qf_privacy');signOut();toast('Account deleted');}catch(e){toast(e.message||'Deletion failed. Contact support.');}};
-if(privacyGpc()) { localStorage.removeItem('qf_d');persistPrivacy({version:'2026-10-15',fingerprinting:false,partners:{},gpc:true}).catch(()=>{}); }
+if(privacyGpc()) { localStorage.removeItem('qf_d');persistPrivacy({version:'2026-10-18',fingerprinting:false,partners:{},gpc:true}).catch(()=>{}); }
 // Privacy choices stay available via the footer button; no blocking dialog on first visit.
