@@ -58,6 +58,16 @@ async function ipReputation(ip: string) {
   return { ih, proxy, kind, score, source };
 }
 
+// ---- Refusal log: reason code, time, hashed IP and hashed device ID only (no raw IP, email or password).
+// Deleted after 90 days by the daily privacy cleanup. A logging error never changes the response.
+async function refuse(req: Request, reason: string, status: number, body: unknown, detail = "", dh = "") {
+  try {
+    const ipRaw = (req.headers.get("cf-connecting-ip") || req.headers.get("x-forwarded-for") || "").split(",")[0].trim();
+    await rest("signup_refusals", "POST", { reason, http_status: status, detail: detail.slice(0, 60) || null, ip_hash: ipRaw ? await sha(ipRaw + "qf-salt") : null, device_hash: /^[0-9a-f]{8,128}$/.test(dh) ? dh : null });
+  } catch (_) {}
+  return J(body, status);
+}
+
 // ---- Same-device duplicate check (explicit one-time opt-in box on the sign-up form) ----
 const DUP_MSG = "This device has already been used to create an account on QuantumFinAI. Each person can have one account. If you share this device or network with family, email youssef@quantumfinai.me and we will review it.";
 const HEX = /^[0-9a-f]{8,128}$/;
@@ -89,7 +99,7 @@ Deno.serve(async (req) => {
   if (req.method !== "POST") return J({ error: "method not allowed" }, 405);
   const b = await req.json().catch(() => ({}));
   const KNOWN_POLICY_VERSIONS = ["2026-10-15", "2026-10-18"];
-  if (b.consent !== true || !KNOWN_POLICY_VERSIONS.includes(String(b.policy_version || ""))) return J({ error: "Please agree to the current Terms of Service and acknowledge the Privacy Policy" }, 400);
+  if (b.consent !== true || !KNOWN_POLICY_VERSIONS.includes(String(b.policy_version || ""))) return await refuse(req, "terms_not_accepted", 400, { error: "Please agree to the current Terms of Service and acknowledge the Privacy Policy" }, b.consent === true ? "policy_version" : "no_consent");
   const email = String(b.email || "").trim().toLowerCase(), pw = String(b.password || ""), name = String(b.name || "").trim().slice(0, 100), tk = String(b.token || "");
   if (!/^\S+@\S+\.\S+$/.test(email) || email.length > 200) return J({ error: "Check your email address" }, 400);
   if (pw.length < 8 || pw.length > 200) return J({ error: "Password must be at least 8 characters" }, 400);
@@ -101,25 +111,25 @@ Deno.serve(async (req) => {
   if (ip) {
     const rep = await ipReputation(ip);
     if (rep.proxy === true) {
-      return J({ error: "Accounts cannot be created from a VPN, proxy or hosting network. Please switch it off and try again from your normal connection." }, 403);
+      return await refuse(req, "vpn_proxy", 403, { error: "Accounts cannot be created from a VPN, proxy or hosting network. Please switch it off and try again from your normal connection." }, `${rep.source || ""} score ${rep.score ?? "?"}`);
     }
   }
   // One-time device check: required, opt-in box ticked on the form. Nothing is stored for refused attempts.
   const dh = String(b.device_hash || "").toLowerCase(), fhRaw = String(b.fingerprint_hash || "").toLowerCase();
-  if (b.device_check !== true) return J({ error: "Please allow the one-time device check. It is required to create an account (one account per person)." }, 400);
-  if (!HEX.test(dh)) return J({ error: "The device check did not run. Please reload the page and try again." }, 400);
+  if (b.device_check !== true) return await refuse(req, "device_check_not_ticked", 400, { error: "Please allow the one-time device check. It is required to create an account (one account per person)." });
+  if (!HEX.test(dh)) return await refuse(req, "device_check_failed", 400, { error: "The device check did not run. Please reload the page and try again." });
   const fh = HEX.test(fhRaw) ? fhRaw : null;
   const fpIn = b.fp && typeof b.fp === "object" ? b.fp : {};
   const fp = { screen: String(fpIn.screen ?? "").slice(0, 20), tz: String(fpIn.tz ?? "").slice(0, 60), cores: Number.isFinite(fpIn.cores) ? Number(fpIn.cores) : null, mem: Number.isFinite(fpIn.mem) ? Number(fpIn.mem) : null, gpu: String(fpIn.gpu ?? "").slice(0, 120), platform: String(fpIn.platform ?? "").slice(0, 40) };
   const hw = await hwHash(fp);
   const iph = ip ? await sha(ip + "qf-salt") : null;
-  if (await deviceDuplicate(dh, fh, hw, iph)) return J({ error: DUP_MSG, code: "device_duplicate" }, 403);
+  if (await deviceDuplicate(dh, fh, hw, iph)) return await refuse(req, "device_duplicate", 403, { error: DUP_MSG, code: "device_duplicate" }, "", dh);
   const sec = Deno.env.get("TURNSTILE_SECRET");
   if (!sec || !tk) return J({ error: "Please complete the human check first" }, 400);
   const fd = new URLSearchParams({ secret: sec, response: tk });
   if (ip) fd.set("remoteip", ip);
   const v = await (await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", { method: "POST", body: fd })).json().catch(() => ({}));
-  if (!v.success) return J({ error: "The human check expired. Please complete it again and retry." }, 400);
+  if (!v.success) return await refuse(req, "human_check_failed", 400, { error: "The human check expired. Please complete it again and retry." }, "", dh);
   const r = await fetch(URL_ + "/auth/v1/admin/users", {
     method: "POST",
     headers: { apikey: SRK, Authorization: "Bearer " + SRK, "Content-Type": "application/json" },
@@ -134,7 +144,7 @@ Deno.serve(async (req) => {
   const u = await r.json().catch(() => ({}));
   if (!r.ok) {
     const m = String(u.msg || u.message || u.error_description || "");
-    if (/already|registered|exists/i.test(m)) return J({ error: "An account with this email already exists. Try signing in instead." }, 409);
+    if (/already|registered|exists/i.test(m)) return await refuse(req, "email_already_registered", 409, { error: "An account with this email already exists. Try signing in instead." }, "", dh);
     if (/password/i.test(m)) return J({ error: m }, 400);
     return J({ error: "Could not create the account. Please try again." }, 400);
   }
@@ -143,7 +153,7 @@ Deno.serve(async (req) => {
   const dr = await fetch(URL_ + "/rest/v1/signup_devices", { method: "POST", headers: H, body: JSON.stringify({ user_id: u.id, device_hash: dh, fp_hash: fh, hw_hash: hw, ip_hash: iph }) }).catch(() => null);
   if (dr && dr.status === 409) {
     await fetch(URL_ + "/auth/v1/admin/users/" + u.id, { method: "DELETE", headers: H }).catch(() => null);
-    return J({ error: DUP_MSG, code: "device_duplicate" }, 403);
+    return await refuse(req, "device_duplicate", 403, { error: DUP_MSG, code: "device_duplicate" }, "simultaneous", dh);
   }
   // Mirror the opt-in in the member's privacy choices so the existing guard checks apply to the account.
   await fetch(URL_ + "/rest/v1/privacy_choices?on_conflict=user_id", { method: "POST", headers: { ...H, Prefer: "resolution=merge-duplicates" }, body: JSON.stringify({ user_id: u.id, fingerprinting: true, partners: {}, gpc: false, version: "2026-10-18" }) }).catch(() => null);
