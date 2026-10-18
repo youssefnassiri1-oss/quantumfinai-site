@@ -872,7 +872,27 @@ async function regDevice() {
     if (!id) { id = crypto.randomUUID(); localStorage.setItem('qf_d',id); }
     const h=await sha('qf|'+id);
     await rpc('register_device',{p_hash:h});
-    await guard({action:'register',hash:h,fp:{}});
+    // FraudGuard collector (fraud-guard.js): device fingerprint, bot and
+    // behaviour signals. Only read here, under the recorded opt-in.
+    let fp = {}, report = null, session = '';
+    try {
+      if (window.FraudGuard) {
+        report = window.FraudGuard.getReport();
+        session = String(report.sessionId || '');
+        const d = report.device || {};
+        fp = {
+          screen: (d.screenW && d.screenH) ? d.screenW + 'x' + d.screenH : '',
+          tz: d.timezone || '',
+          lang: d.language || '',
+          cores: (typeof d.hardwareConcurrency === 'number') ? d.hardwareConcurrency : undefined,
+          mem: (typeof d.deviceMemory === 'number') ? d.deviceMemory : undefined,
+          gpu: (d.webgl && d.webgl.renderer) ? String(d.webgl.renderer).slice(0, 120) : '',
+          platform: d.platform || '',
+          touch: (typeof d.maxTouchPoints === 'number') ? d.maxTouchPoints : undefined
+        };
+      }
+    } catch (_) { report = null; fp = {}; session = ''; }
+    await guard({action:'register',hash:h,fp:fp,report:report,session:session});
   } catch (_) {}
 }
 async function sendVerify() {
