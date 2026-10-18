@@ -17,33 +17,14 @@ const rest = async (p: string, m = "GET", b?: unknown, extra: Record<string, str
   return t ? JSON.parse(t) : null;
 };
 const sha = async (s: string) => [...new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(s)))].map((x) => x.toString(16).padStart(2, "0")).join("");
-// Same IP reputation source as the guard function: Scamalytics first, proxycheck.io fallback,
-// cached for 7 days in ip_checks so repeat visitors do not burn API quota.
+// Same IP reputation source as the guard function: proxycheck.io (Scamalytics removed 2026-10-18:
+// it wrongly flagged real mobile users), cached for 7 days in ip_checks so repeat visitors do not burn API quota.
 async function ipReputation(ip: string) {
   const ih = await sha(ip + "qf-salt");
   const c = await rest(`ip_checks?select=*&ip_hash=eq.${ih}&checked_at=gte.${new Date(Date.now() - 7 * 864e5).toISOString()}`);
   if (c && c.length) return { ...c[0], ih };
   let proxy = false, kind: string | null = null, score: number | null = null, source = "none";
-  const su = Deno.env.get("SCAMALYTICS_USER"), sk = Deno.env.get("SCAMALYTICS_KEY");
-  try {
-    if (su && sk) {
-      const r = await fetch(`https://api11.scamalytics.com/v3/${encodeURIComponent(su)}?key=${encodeURIComponent(sk)}&ip=${encodeURIComponent(ip)}`);
-      const j = await r.json();
-      const s = j?.scamalytics;
-      if (s && s.status === "ok") {
-        score = Number(s.scamalytics_score);
-        source = "scamalytics";
-        const ex = j.external_datasources || {};
-        const fld = (o: any) => (o ? ["ip_is_proxy", "proxy", "is_proxy", "vpn", "tor"].filter((k) => o[k] === true) : []);
-        const sp = s.scamalytics_proxy || {};
-        // Names the exact signal(s) that triggered the block: ext:<datasource>.<field> or sp.<is_vpn|is_datacenter|is_resproxy>
-        const fl = [...Object.entries(ex).flatMap(([k, o]) => fld(o).map((x) => `ext:${k}.${x}`)), ...["is_vpn", "is_datacenter", "is_resproxy"].filter((k) => sp[k] === true).map((k) => "sp." + k)];
-        proxy = fl.length > 0;
-        kind = fl.join(",").slice(0, 150) || null;
-      }
-    }
-  } catch (_) {}
-  if (source === "none" || score === null) {
+  {
     try {
       const pk = Deno.env.get("PROXYCHECK_KEY");
       const r = await fetch(`https://proxycheck.io/v2/${encodeURIComponent(ip)}?vpn=1&risk=1&asn=1${pk ? `&key=${pk}` : ""}`);
@@ -120,7 +101,7 @@ Deno.serve(async (req) => {
   if (!name) return J({ error: "Name is required" }, 400);
   const ip = (req.headers.get("cf-connecting-ip") || req.headers.get("x-forwarded-for") || "").split(",")[0].trim();
   // Upfront network block, before the human check is consumed: VPN, proxy, Tor and hosting/datacenter IPs.
-  // If every reputation provider is unreachable the request is allowed through (fail-open); the
+  // If the reputation provider is unreachable the request is allowed through (fail-open); the
   // authenticated guard function still scores the IP after sign-up in that case.
   if (ip) {
     const rep = await ipReputation(ip);
