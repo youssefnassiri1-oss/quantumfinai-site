@@ -36,7 +36,9 @@ async function ipReputation(ip: string) {
         const ex = j.external_datasources || {};
         const f = (o: any) => o && (o.ip_is_proxy === true || o.proxy === true || o.is_proxy === true || o.vpn === true || o.tor === true);
         const sp = s.scamalytics_proxy || {};
-        proxy = Object.values(ex).some(f) || sp.is_vpn === true || sp.is_datacenter === true || sp.is_resproxy === true;
+        const fl = [...Object.entries(ex).filter(([, o]) => f(o)).map(([k]) => "ext:" + k), ...["is_vpn", "is_datacenter", "is_resproxy"].filter((k) => sp[k] === true).map((k) => k.slice(3))];
+        proxy = fl.length > 0;
+        kind = fl.join(",").slice(0, 80) || null;
       }
     }
   } catch (_) {}
@@ -58,12 +60,20 @@ async function ipReputation(ip: string) {
   return { ih, proxy, kind, score, source };
 }
 
-// ---- Refusal log: reason code, time, hashed IP and hashed device ID only (no raw IP, email or password).
+// ---- Refusal log: reason code, time, hashed IP, hashed device ID, a salted hash of the attempted email, and
+// a short detail (provider, score, flags, browser timezone). No raw IP, email, name or password.
 // Deleted after 90 days by the daily privacy cleanup. A logging error never changes the response.
-async function refuse(req: Request, reason: string, status: number, body: unknown, detail = "", dh = "") {
+// Email hash = sha256(secret salt + lowercase trimmed email), same formula as the SQL function refusals_for_email().
+let SALT: string | null = null;
+async function emailHash(em: string) {
+  if (!em) return null;
+  if (!SALT) { const r = await rest("refusal_salt?select=salt&id=eq.1"); SALT = (r && r[0] && r[0].salt) || null; }
+  return SALT ? await sha(SALT + em) : null;
+}
+async function refuseBase(req: Request, em: string, reason: string, status: number, body: unknown, detail = "", dh = "") {
   try {
     const ipRaw = (req.headers.get("cf-connecting-ip") || req.headers.get("x-forwarded-for") || "").split(",")[0].trim();
-    await rest("signup_refusals", "POST", { reason, http_status: status, detail: detail.slice(0, 60) || null, ip_hash: ipRaw ? await sha(ipRaw + "qf-salt") : null, device_hash: /^[0-9a-f]{8,128}$/.test(dh) ? dh : null });
+    await rest("signup_refusals", "POST", { reason, http_status: status, detail: detail.slice(0, 200) || null, ip_hash: ipRaw ? await sha(ipRaw + "qf-salt") : null, device_hash: /^[0-9a-f]{8,128}$/.test(dh) ? dh : null, email_hash: await emailHash(em) });
   } catch (_) {}
   return J(body, status);
 }
@@ -98,6 +108,9 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: CORS });
   if (req.method !== "POST") return J({ error: "method not allowed" }, 405);
   const b = await req.json().catch(() => ({}));
+  const em0 = String(b.email || "").trim().toLowerCase().slice(0, 200);
+  const refuse = (r: Request, reason: string, status: number, body: unknown, detail = "", dh = "") =>
+    refuseBase(r, em0, reason, status, body, [detail, `tz=${String(b?.fp?.tz || "?").slice(0, 40)}`].filter(Boolean).join(" "), dh);
   const KNOWN_POLICY_VERSIONS = ["2026-10-15", "2026-10-18"];
   if (b.consent !== true || !KNOWN_POLICY_VERSIONS.includes(String(b.policy_version || ""))) return await refuse(req, "terms_not_accepted", 400, { error: "Please agree to the current Terms of Service and acknowledge the Privacy Policy" }, b.consent === true ? "policy_version" : "no_consent");
   const email = String(b.email || "").trim().toLowerCase(), pw = String(b.password || ""), name = String(b.name || "").trim().slice(0, 100), tk = String(b.token || "");
@@ -111,7 +124,7 @@ Deno.serve(async (req) => {
   if (ip) {
     const rep = await ipReputation(ip);
     if (rep.proxy === true) {
-      return await refuse(req, "vpn_proxy", 403, { error: "Accounts cannot be created from a VPN, proxy or hosting network. Please switch it off and try again from your normal connection." }, `${rep.source || ""} score ${rep.score ?? "?"}`);
+      return await refuse(req, "vpn_proxy", 403, { error: "Accounts cannot be created from a VPN, proxy or hosting network. Please switch it off and try again from your normal connection." }, `${rep.source || ""} score ${rep.score ?? "?"} flags ${rep.kind || "none"}`);
     }
   }
   // One-time device check: required, opt-in box ticked on the form. Nothing is stored for refused attempts.
