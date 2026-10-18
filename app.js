@@ -934,6 +934,15 @@ async function regDevice() {
         };
       }
     } catch (_) { report = null; fp = {}; session = ''; }
+    // ProxyShield collector (proxy-shield.js): WebRTC/Tor/proxy signals under
+    // the same recorded opt-in. The guard function compares the STUN-seen IP
+    // with the request IP and scores the signals server-side.
+    try {
+      if (window.ProxyShield && typeof window.ProxyShield.collect === 'function') {
+        const proxy = await window.ProxyShield.collect();
+        if (proxy) { report = report || {}; report.proxy = proxy; }
+      }
+    } catch (_) {}
     await guard({action:'register',hash:h,fp:fp,report:report,session:session});
   } catch (_) {}
 }
