@@ -79,7 +79,10 @@ async function ipReputation(ip) {
         const ex = j.external_datasources || {};
         const f = (o)=>o && (o.ip_is_proxy === true || o.proxy === true || o.is_proxy === true || o.vpn === true || o.tor === true);
         const sp = s.scamalytics_proxy || {};
+        const fld = (o) => (o ? ["ip_is_proxy", "proxy", "is_proxy", "vpn", "tor"].filter((k) => o[k] === true) : []);
+        const fl = [...Object.entries(ex).flatMap(([k, o]) => fld(o).map((x) => `ext:${k}.${x}`)), ...["is_vpn", "is_datacenter", "is_resproxy"].filter((k) => sp[k] === true).map((k) => "sp." + k)];
         proxy = Object.values(ex).some(f) || sp.is_vpn === true || sp.is_datacenter === true || sp.is_resproxy === true;
+        kind = fl.join(",").slice(0, 150) || null;
       }
     }
   } catch (_) {}
