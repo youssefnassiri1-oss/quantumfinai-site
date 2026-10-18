@@ -1,6 +1,7 @@
 // Sign-up only: verifies the Cloudflare Turnstile human check server-side, then creates the account.
 // Sign-in does not need a human check. Direct signups on the auth API are disabled, so this is the only way in.
-// Upfront blocks: VPN/proxy/datacenter connections and already-registered emails are refused with clear messages.
+// Upfront blocks: VPN/proxy/datacenter connections, same-device duplicate accounts and already-registered emails
+// are refused with their own clear messages.
 const URL_ = Deno.env.get("SUPABASE_URL")!, SRK = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const CORS = {
   "Access-Control-Allow-Origin": "https://quantumfinai.me",
@@ -56,6 +57,33 @@ async function ipReputation(ip: string) {
   if (source !== "none") await rest("ip_checks", "POST", { ip_hash: ih, proxy, kind, score, source, checked_at: new Date().toISOString() }, { Prefer: "resolution=merge-duplicates" });
   return { ih, proxy, kind, score, source };
 }
+
+// ---- Same-device duplicate check (explicit one-time opt-in box on the sign-up form) ----
+const DUP_MSG = "This device has already been used to create an account on QuantumFinAI. Each person can have one account. If you share this device or network with family, email youssef@quantumfinai.me and we will review it.";
+const HEX = /^[0-9a-f]{8,128}$/;
+async function hwHash(fp: any) {
+  if (!fp || !fp.gpu || fp.cores === undefined || fp.cores === null) return null;
+  return await sha(JSON.stringify([fp.screen ?? "", fp.tz ?? "", fp.cores ?? null, fp.mem ?? null, fp.gpu ?? "", fp.platform ?? ""]));
+}
+// Strong match: the same browser storage ID. Medium match: same network AND same browser/hardware signature.
+// Any lookup error fails open (the request is allowed) so a database hiccup never blocks real members.
+async function deviceDuplicate(dh: string, fh: string | null, hw: string | null, iph: string | null) {
+  try {
+    const arr = (x: unknown) => (Array.isArray(x) ? x : []);
+    if (arr(await rest(`signup_devices?select=user_id&device_hash=eq.${dh}&limit=1`)).length) return true;
+    if (arr(await rest(`devices?select=user_id&device_hash=eq.${dh}&limit=1`)).length) return true;
+    if (!iph) return false;
+    const conds = [fh ? `fp_hash.eq.${fh}` : "", hw ? `hw_hash.eq.${hw}` : ""].filter(Boolean);
+    if (conds.length && arr(await rest(`signup_devices?select=user_id&ip_hash=eq.${iph}&or=(${conds.join(",")})&limit=1`)).length) return true;
+    if (fh && arr(await rest(`fraud_reports?select=user_id&ip_hash=eq.${iph}&fingerprint_hash=eq.${fh}&limit=1`)).length) return true;
+    if (hw) {
+      for (const d of arr(await rest(`devices?select=fp&ip_hash=eq.${iph}&limit=50`))) {
+        if (await hwHash(d.fp) === hw) return true;
+      }
+    }
+  } catch (_) {}
+  return false;
+}
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: CORS });
   if (req.method !== "POST") return J({ error: "method not allowed" }, 405);
@@ -76,6 +104,16 @@ Deno.serve(async (req) => {
       return J({ error: "Accounts cannot be created from a VPN, proxy or hosting network. Please switch it off and try again from your normal connection." }, 403);
     }
   }
+  // One-time device check: required, opt-in box ticked on the form. Nothing is stored for refused attempts.
+  const dh = String(b.device_hash || "").toLowerCase(), fhRaw = String(b.fingerprint_hash || "").toLowerCase();
+  if (b.device_check !== true) return J({ error: "Please allow the one-time device check. It is required to create an account (one account per person)." }, 400);
+  if (!HEX.test(dh)) return J({ error: "The device check did not run. Please reload the page and try again." }, 400);
+  const fh = HEX.test(fhRaw) ? fhRaw : null;
+  const fpIn = b.fp && typeof b.fp === "object" ? b.fp : {};
+  const fp = { screen: String(fpIn.screen ?? "").slice(0, 20), tz: String(fpIn.tz ?? "").slice(0, 60), cores: Number.isFinite(fpIn.cores) ? Number(fpIn.cores) : null, mem: Number.isFinite(fpIn.mem) ? Number(fpIn.mem) : null, gpu: String(fpIn.gpu ?? "").slice(0, 120), platform: String(fpIn.platform ?? "").slice(0, 40) };
+  const hw = await hwHash(fp);
+  const iph = ip ? await sha(ip + "qf-salt") : null;
+  if (await deviceDuplicate(dh, fh, hw, iph)) return J({ error: DUP_MSG, code: "device_duplicate" }, 403);
   const sec = Deno.env.get("TURNSTILE_SECRET");
   if (!sec || !tk) return J({ error: "Please complete the human check first" }, 400);
   const fd = new URLSearchParams({ secret: sec, response: tk });
@@ -90,7 +128,7 @@ Deno.serve(async (req) => {
       password: pw,
       email_confirm: true,
       user_metadata: { name },
-      app_metadata: { consent: { terms_accepted: true, privacy_acknowledged: true, policy_version: String(b.policy_version), accepted_at: new Date().toISOString() } }
+      app_metadata: { consent: { terms_accepted: true, privacy_acknowledged: true, policy_version: String(b.policy_version), device_check: true, accepted_at: new Date().toISOString() } }
     })
   });
   const u = await r.json().catch(() => ({}));
@@ -100,6 +138,15 @@ Deno.serve(async (req) => {
     if (/password/i.test(m)) return J({ error: m }, 400);
     return J({ error: "Could not create the account. Please try again." }, 400);
   }
+  // Record the sign-up device check. The unique index on device_hash also settles two simultaneous sign-ups
+  // from one browser: the loser's fresh account is removed and refused.
+  const dr = await fetch(URL_ + "/rest/v1/signup_devices", { method: "POST", headers: H, body: JSON.stringify({ user_id: u.id, device_hash: dh, fp_hash: fh, hw_hash: hw, ip_hash: iph }) }).catch(() => null);
+  if (dr && dr.status === 409) {
+    await fetch(URL_ + "/auth/v1/admin/users/" + u.id, { method: "DELETE", headers: H }).catch(() => null);
+    return J({ error: DUP_MSG, code: "device_duplicate" }, 403);
+  }
+  // Mirror the opt-in in the member's privacy choices so the existing guard checks apply to the account.
+  await fetch(URL_ + "/rest/v1/privacy_choices?on_conflict=user_id", { method: "POST", headers: { ...H, Prefer: "resolution=merge-duplicates" }, body: JSON.stringify({ user_id: u.id, fingerprinting: true, partners: {}, gpc: false, version: "2026-10-18" }) }).catch(() => null);
   // Record the passed human check and sign the user in server-side, in parallel,
   // so the browser skips a second cross-region round trip right after sign-up.
   const [tr] = await Promise.all([
