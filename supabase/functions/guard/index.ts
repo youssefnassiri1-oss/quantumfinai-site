@@ -67,26 +67,7 @@ async function ipReputation(ip) {
     ih
   };
   let proxy = false, kind = null, score = null, source = "none";
-  const su = Deno.env.get("SCAMALYTICS_USER"), sk = Deno.env.get("SCAMALYTICS_KEY");
-  try {
-    if (su && sk) {
-      const r = await fetch(`https://api11.scamalytics.com/v3/${encodeURIComponent(su)}?key=${encodeURIComponent(sk)}&ip=${encodeURIComponent(ip)}`);
-      const j = await r.json();
-      const s = j?.scamalytics;
-      if (s && s.status === "ok") {
-        score = Number(s.scamalytics_score);
-        source = "scamalytics";
-        const ex = j.external_datasources || {};
-        const f = (o)=>o && (o.ip_is_proxy === true || o.proxy === true || o.is_proxy === true || o.vpn === true || o.tor === true);
-        const sp = s.scamalytics_proxy || {};
-        const fld = (o) => (o ? ["ip_is_proxy", "proxy", "is_proxy", "vpn", "tor"].filter((k) => o[k] === true) : []);
-        const fl = [...Object.entries(ex).flatMap(([k, o]) => fld(o).map((x) => `ext:${k}.${x}`)), ...["is_vpn", "is_datacenter", "is_resproxy"].filter((k) => sp[k] === true).map((k) => "sp." + k)];
-        proxy = Object.values(ex).some(f) || sp.is_vpn === true || sp.is_datacenter === true || sp.is_resproxy === true;
-        kind = fl.join(",").slice(0, 150) || null;
-      }
-    }
-  } catch (_) {}
-  if (source === "none" || score === null) {
+  {
     try {
       const pk = Deno.env.get("PROXYCHECK_KEY");
       const r = await fetch(`https://proxycheck.io/v2/${encodeURIComponent(ip)}?vpn=1&risk=1&asn=1${pk ? `&key=${pk}` : ""}`);
