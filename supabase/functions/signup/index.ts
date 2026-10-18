@@ -34,11 +34,12 @@ async function ipReputation(ip: string) {
         score = Number(s.scamalytics_score);
         source = "scamalytics";
         const ex = j.external_datasources || {};
-        const f = (o: any) => o && (o.ip_is_proxy === true || o.proxy === true || o.is_proxy === true || o.vpn === true || o.tor === true);
+        const fld = (o: any) => (o ? ["ip_is_proxy", "proxy", "is_proxy", "vpn", "tor"].filter((k) => o[k] === true) : []);
         const sp = s.scamalytics_proxy || {};
-        const fl = [...Object.entries(ex).filter(([, o]) => f(o)).map(([k]) => "ext:" + k), ...["is_vpn", "is_datacenter", "is_resproxy"].filter((k) => sp[k] === true).map((k) => k.slice(3))];
+        // Names the exact signal(s) that triggered the block: ext:<datasource>.<field> or sp.<is_vpn|is_datacenter|is_resproxy>
+        const fl = [...Object.entries(ex).flatMap(([k, o]) => fld(o).map((x) => `ext:${k}.${x}`)), ...["is_vpn", "is_datacenter", "is_resproxy"].filter((k) => sp[k] === true).map((k) => "sp." + k)];
         proxy = fl.length > 0;
-        kind = fl.join(",").slice(0, 80) || null;
+        kind = fl.join(",").slice(0, 150) || null;
       }
     }
   } catch (_) {}
@@ -50,7 +51,7 @@ async function ipReputation(ip: string) {
       const d = j && j[ip];
       if (d) {
         proxy = d.proxy === "yes";
-        kind = d.type || null;
+        kind = "type=" + (d.type || "?");
         score = typeof d.risk === "number" ? d.risk : Number(d.risk ?? 0);
         source = "proxycheck";
       }
@@ -90,19 +91,19 @@ async function hwHash(fp: any) {
 async function deviceDuplicate(dh: string, fh: string | null, hw: string | null, iph: string | null) {
   try {
     const arr = (x: unknown) => (Array.isArray(x) ? x : []);
-    if (arr(await rest(`signup_devices?select=user_id&device_hash=eq.${dh}&limit=1`)).length) return true;
-    if (arr(await rest(`devices?select=user_id&device_hash=eq.${dh}&limit=1`)).length) return true;
-    if (!iph) return false;
+    if (arr(await rest(`signup_devices?select=user_id&device_hash=eq.${dh}&limit=1`)).length) return "same device_hash in signup_devices";
+    if (arr(await rest(`devices?select=user_id&device_hash=eq.${dh}&limit=1`)).length) return "same device_hash in devices";
+    if (!iph) return null;
     const conds = [fh ? `fp_hash.eq.${fh}` : "", hw ? `hw_hash.eq.${hw}` : ""].filter(Boolean);
-    if (conds.length && arr(await rest(`signup_devices?select=user_id&ip_hash=eq.${iph}&or=(${conds.join(",")})&limit=1`)).length) return true;
-    if (fh && arr(await rest(`fraud_reports?select=user_id&ip_hash=eq.${iph}&fingerprint_hash=eq.${fh}&limit=1`)).length) return true;
+    if (conds.length && arr(await rest(`signup_devices?select=user_id&ip_hash=eq.${iph}&or=(${conds.join(",")})&limit=1`)).length) return "same network + same browser/hardware signature in signup_devices";
+    if (fh && arr(await rest(`fraud_reports?select=user_id&ip_hash=eq.${iph}&fingerprint_hash=eq.${fh}&limit=1`)).length) return "same network + fingerprint in fraud_reports";
     if (hw) {
       for (const d of arr(await rest(`devices?select=fp&ip_hash=eq.${iph}&limit=50`))) {
-        if (await hwHash(d.fp) === hw) return true;
+        if (await hwHash(d.fp) === hw) return "same network + hardware signature in devices";
       }
     }
   } catch (_) {}
-  return false;
+  return null;
 }
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: CORS });
@@ -124,7 +125,7 @@ Deno.serve(async (req) => {
   if (ip) {
     const rep = await ipReputation(ip);
     if (rep.proxy === true) {
-      return await refuse(req, "vpn_proxy", 403, { error: "Accounts cannot be created from a VPN, proxy or hosting network. Please switch it off and try again from your normal connection." }, `${rep.source || ""} score ${rep.score ?? "?"} flags ${rep.kind || "none"}`);
+      return await refuse(req, "vpn_proxy", 403, { error: "Accounts cannot be created from a VPN, proxy or hosting network. Please switch it off and try again from your normal connection." }, `network rule: ${rep.source || "?"} flagged proxy/VPN/hosting, signal ${rep.kind || "not recorded (cached before trigger logging)"}`);
     }
   }
   // One-time device check: required, opt-in box ticked on the form. Nothing is stored for refused attempts.
@@ -136,7 +137,8 @@ Deno.serve(async (req) => {
   const fp = { screen: String(fpIn.screen ?? "").slice(0, 20), tz: String(fpIn.tz ?? "").slice(0, 60), cores: Number.isFinite(fpIn.cores) ? Number(fpIn.cores) : null, mem: Number.isFinite(fpIn.mem) ? Number(fpIn.mem) : null, gpu: String(fpIn.gpu ?? "").slice(0, 120), platform: String(fpIn.platform ?? "").slice(0, 40) };
   const hw = await hwHash(fp);
   const iph = ip ? await sha(ip + "qf-salt") : null;
-  if (await deviceDuplicate(dh, fh, hw, iph)) return await refuse(req, "device_duplicate", 403, { error: DUP_MSG, code: "device_duplicate" }, "", dh);
+  const dupRule = await deviceDuplicate(dh, fh, hw, iph);
+  if (dupRule) return await refuse(req, "device_duplicate", 403, { error: DUP_MSG, code: "device_duplicate" }, "duplicate rule: " + dupRule, dh);
   const sec = Deno.env.get("TURNSTILE_SECRET");
   if (!sec || !tk) return J({ error: "Please complete the human check first" }, 400);
   const fd = new URLSearchParams({ secret: sec, response: tk });
