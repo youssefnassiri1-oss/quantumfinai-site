@@ -629,14 +629,19 @@ async function openMooffersWall() {
     if (!geo.ok) throw new Error('Could not verify your country. Please try again.');
     const country = (await geo.text()).match(/^loc=([A-Z]{2})$/m)?.[1];
     if (!country || country === 'XX' || country === 'T1') throw new Error('Could not verify your country. Please try again.');
+    const wallUrl = 'https://wall.mooffers.com/offerwall/' + MOOFFERS_APP_ID + '?uid=' + uid.replace(/-/g, '') + '&platform=web&country=' + encodeURIComponent(country) + '&source=quantumfinai';
+    const tabBar = document.createElement('p');
+    tabBar.className = 'note';
+    tabBar.style.cssText = 'padding:10px 16px;margin:0;text-align:center';
+    tabBar.innerHTML = 'On iPhone? <a href="' + wallUrl + '" target="_blank" rel="noopener" style="color:#7dd3fc;text-decoration:underline">Open the offerwall in a new tab</a> so offers open correctly.';
     const f = document.createElement('iframe');
-    f.src = 'https://wall.mooffers.com/offerwall/' + MOOFFERS_APP_ID + '?uid=' + uid.replace(/-/g, '') + '&platform=web&country=' + encodeURIComponent(country) + '&source=quantumfinai';
+    f.src = wallUrl;
     f.title = 'Mooffers Offerwall';
     f.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox');
     f.referrerPolicy = 'no-referrer';
     f.loading = 'lazy';
     f.style.cssText = 'width:100%;height:calc(100dvh - 130px);min-height:560px;border:0;background:#fff;display:block';
-    wrap.replaceChildren(f);
+    wrap.replaceChildren(tabBar, f);
   } catch (e) {
     wrap.innerHTML = `<p class="note" style="padding:24px;color:#fca5a5">${esc(e.message)}</p>`;
   }
