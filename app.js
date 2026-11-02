@@ -275,6 +275,8 @@ function drawWallPartners(nets) {
           ? `<button class="btn small" type="button" data-open-theoremreach="1">Launch Offerwall</button>`
           : n.name === 'Tapjoy' && n.status === 'partner'
           ? `<button class="btn small" type="button" data-open-tapjoy="1">Launch Offerwall</button>`
+          : n.name === 'Sharklio' && n.status === 'partner'
+          ? `<button class="btn small" type="button" data-open-sharklio="1">Launch Offerwall</button>`
           : `<button class="btn small ghost" type="button" disabled>Coming Soon</button>`}
       </article>`;
   };
@@ -612,6 +614,41 @@ async function openOfferyWall() {
   }
 }
 
+async function openSharklioWall() {
+  if (!(await permitPartner('Sharklio'))) return;
+  const viewer = document.getElementById('wall-viewer');
+  const wrap = document.getElementById('svwrap');
+  document.getElementById('wall-title').textContent = 'Sharklio Offerwall';
+  viewer.hidden = false;
+  wrap.innerHTML = `<p class="note" style="padding:24px;text-align:center">Loading Sharklio Offerwall...</p>`;
+  viewer.scrollIntoView({ behavior: 'smooth' });
+  try {
+    const k = await tok();
+    if (!k) throw new Error('Please sign in again.');
+    const r = await fetch(SB_URL + '/functions/v1/sharklio-wall', {
+      method: 'POST',
+      headers: { apikey: SB_KEY, Authorization: 'Bearer ' + k, 'Content-Type': 'application/json' },
+      body: '{}'
+    });
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok || !d.url) throw new Error(d.error || 'Offerwall is temporarily unavailable.');
+    const tabBar = document.createElement('p');
+    tabBar.className = 'note';
+    tabBar.style.cssText = 'padding:10px 16px;margin:0;text-align:center';
+    tabBar.innerHTML = 'On iPhone? <a href="' + d.url + '" target="_blank" rel="noopener" style="color:#7dd3fc;text-decoration:underline">Open the offerwall in a new tab</a> so offers open correctly.';
+    const f = document.createElement('iframe');
+    f.src = d.url;
+    f.title = 'Sharklio Offerwall';
+    f.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox');
+    f.referrerPolicy = 'no-referrer';
+    f.loading = 'lazy';
+    f.style.cssText = 'width:100%;height:calc(100dvh - 130px);min-height:560px;border:0;background:#fff;display:block';
+    wrap.replaceChildren(tabBar, f);
+  } catch (e) {
+    wrap.innerHTML = `<p class="note" style="padding:24px;color:#fca5a5">${esc(e.message)}</p>`;
+  }
+}
+
 const GEMIAD_PLACEMENT = '6ae651f431563d474932e1b0';
 async function openGemiadWall() {
   if (!(await permitPartner('GemiAd'))) return;
@@ -778,6 +815,7 @@ document.getElementById('dash').addEventListener('click', async e => {
   if (d.openMooffers) { openMooffersWall(); return; }
   if (d.openTheoremreach) { openTheoremreachWall(); return; }
   if (d.openTapjoy) { openTapjoyWall(); return; }
+  if (d.openSharklio) { openSharklioWall(); return; }
   if (d.claim) {
     run(async () => {
       const r = await rpc('claim_offer', { p_offer: d.claim });
