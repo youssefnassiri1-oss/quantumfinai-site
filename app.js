@@ -269,6 +269,8 @@ function drawWallPartners(nets) {
           ? `<button class="btn small" type="button" data-open-offery="1">Launch Offerwall</button>`
           : n.name === 'GemiAd' && n.status === 'partner'
           ? `<button class="btn small" type="button" data-open-gemiad="1">Launch Offerwall</button>`
+          : n.name === 'PixyLabs' && n.status === 'partner'
+          ? `<button class="btn small" type="button" data-open-pixylabs="1">Launch Offerwall</button>`
           : n.name === 'Mooffers' && n.status === 'partner'
           ? `<button class="btn small" type="button" data-open-mooffers="1">Launch Offerwall</button>`
           : n.name === 'TheoremReach' && n.status === 'partner'
@@ -681,6 +683,38 @@ async function openGemiadWall() {
   }
 }
 
+const PIXYLABS_PID = '624';
+async function openPixylabsWall() {
+  if (!(await permitPartner('PixyLabs'))) return;
+  const viewer = document.getElementById('wall-viewer');
+  const wrap = document.getElementById('svwrap');
+  document.getElementById('wall-title').textContent = 'PixyLabs Offerwall';
+  viewer.hidden = false;
+  wrap.innerHTML = `<p class="note" style="padding:24px;text-align:center">Loading PixyLabs Offerwall...</p>`;
+  viewer.scrollIntoView({ behavior: 'smooth' });
+  try {
+    const k = await tok();
+    if (!k) throw new Error('Please sign in again.');
+    const uid = JSON.parse(atob(k.split('.')[1].replace(/-/g, '+').replace(/_/g, '/'))).sub;
+    if (!/^[0-9a-f-]{36}$/i.test(uid || '')) throw new Error('Offerwall is temporarily unavailable.');
+    const wallUrl = 'https://offerwall.pixylabs.co/?pid=' + PIXYLABS_PID + '&uid=' + encodeURIComponent(uid);
+    const tabBar = document.createElement('p');
+    tabBar.className = 'note';
+    tabBar.style.cssText = 'padding:10px 16px;margin:0;text-align:center';
+    tabBar.innerHTML = 'On iPhone? <a href="' + wallUrl + '" target="_blank" rel="noopener" style="color:#7dd3fc;text-decoration:underline">Open the offerwall in a new tab</a> so offers open correctly.';
+    const f = document.createElement('iframe');
+    f.src = wallUrl;
+    f.title = 'PixyLabs Offerwall';
+    f.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox');
+    f.referrerPolicy = 'no-referrer';
+    f.loading = 'lazy';
+    f.style.cssText = 'width:100%;height:calc(100dvh - 130px);min-height:560px;border:0;background:#fff;display:block';
+    wrap.replaceChildren(tabBar, f);
+  } catch (e) {
+    wrap.innerHTML = `<p class="note" style="padding:24px;color:#fca5a5">${esc(e.message)}</p>`;
+  }
+}
+
 const MOOFFERS_APP_ID = 'app_c311646753b15169';
 async function openMooffersWall() {
   if (!(await permitPartner('Mooffers'))) return;
@@ -812,6 +846,7 @@ document.getElementById('dash').addEventListener('click', async e => {
   if (d.openAyet) { openAyetWall(); return; }
   if (d.openOffery) { openOfferyWall(); return; }
   if (d.openGemiad) { openGemiadWall(); return; }
+  if (d.openPixylabs) { openPixylabsWall(); return; }
   if (d.openMooffers) { openMooffersWall(); return; }
   if (d.openTheoremreach) { openTheoremreachWall(); return; }
   if (d.openTapjoy) { openTapjoyWall(); return; }
