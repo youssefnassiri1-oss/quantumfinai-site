@@ -32,5 +32,5 @@ function bg(){
 }
 function go(){ bg(); pay(); strip(); }
 if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',go); else go();
-new MutationObserver(function(){ var el=document.getElementById('wd'); if(el&&!el.querySelector('.qpay')){ el.dataset.q=''; pay(); } }).observe(document.documentElement,{childList:true,subtree:true});
+var _t;new MutationObserver(function(){ if(_t) return; _t=setTimeout(function(){ _t=0; var el=document.getElementById('wd'); if(el&&!el.querySelector('.qpay')){ el.dataset.q=''; pay(); } },400); }).observe(document.documentElement,{childList:true,subtree:true});
 })();
