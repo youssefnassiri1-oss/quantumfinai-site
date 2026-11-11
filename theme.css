@@ -75,3 +75,26 @@ input:focus{outline:0;border-color:var(--c);box-shadow:0 0 0 3px rgba(25,230,208
 .qtrack .qchip:nth-child(n+12){display:none}
 .card:hover,.mcard:hover,.wall-card:hover{box-shadow:none}
 }
+
+/* phone-first pass (2026-11-11): real phone layout, touch targets, fixed buttons no longer overlap */
+#snd-toggle{bottom:calc(66px + env(safe-area-inset-bottom,0px))}
+#privacy-choices{bottom:calc(14px + env(safe-area-inset-bottom,0px));max-width:calc(100vw - 28px)}
+section[id]{scroll-margin-top:72px}
+@media(max-width:700px){
+.nav .brand{min-height:40px}
+.btn{display:inline-flex;align-items:center;justify-content:center;min-height:46px}
+.btn.small{min-height:42px;padding:8px 14px}
+.tab{display:inline-flex;align-items:center;justify-content:center;min-height:44px}
+#dash .dtabs .tab{white-space:nowrap}
+#dash .dtabs{-webkit-mask-image:linear-gradient(90deg,#000 86%,transparent);mask-image:linear-gradient(90deg,#000 86%,transparent)}
+.pill{min-height:44px;align-items:center}
+footer .fl{gap:6px 16px}
+footer .fl a{display:inline-block;padding:10px 2px}
+.faq summary{padding:8px 0}
+.formbox{padding:24px 18px;border-radius:16px}
+.wall-bar{flex-wrap:wrap;gap:10px}
+.wall-bar>div{display:flex;gap:10px;flex-wrap:wrap}
+#svwrap iframe{min-height:0!important;height:calc(100dvh - 170px)!important}
+.hero{padding-top:64px}
+body{-webkit-tap-highlight-color:transparent}
+}
