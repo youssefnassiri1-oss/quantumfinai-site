@@ -98,3 +98,22 @@ footer .fl a{display:inline-block;padding:10px 2px}
 .hero{padding-top:64px}
 body{-webkit-tap-highlight-color:transparent}
 }
+/* Phone navigation fits without hiding tabs; preserve desktop layout. */
+#privacy-choices{position:fixed}
+@media(max-width:700px){
+#dash .dtabs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));overflow:visible;-webkit-mask-image:none;mask-image:none;gap:8px}
+#dash .dtabs .tab{width:100%;padding:10px 6px;font-size:14px;min-height:46px}
+input:not([type=checkbox]),select,textarea{font-size:16px;min-width:0;max-width:100%;min-height:46px}
+.prof-grid{grid-template-columns:minmax(0,1fr)}
+.prof-card{padding:22px 18px;min-width:0}
+.prof-head>div,.uid-box code,.mtxt,.wall-head>div{min-width:0;overflow-wrap:anywhere}
+.prof-avatar,.wall-logo{flex-shrink:0}
+.prof-row{flex-wrap:wrap;gap:6px 12px}
+.uid-box{flex-wrap:wrap}
+.wdpick select{width:0;min-width:0}
+#toast{width:max-content;max-width:calc(100vw - 32px);bottom:126px;overflow-wrap:anywhere}
+footer{padding-bottom:130px}
+#snd-toggle{width:44px;height:44px;bottom:calc(74px + env(safe-area-inset-bottom,0px))}
+#privacy-dialog,.modal{max-height:calc(100dvh - 32px);overflow:auto}
+}
+@media(max-width:380px){.nav .brand{font-size:15px;gap:4px}.user-bar{gap:8px}.bal-pill{padding:6px 10px}.nav .btn.small{padding:8px 10px}}
