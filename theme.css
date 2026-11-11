@@ -117,3 +117,10 @@ footer{padding-bottom:130px}
 #privacy-dialog,.modal{max-height:calc(100dvh - 32px);overflow:auto}
 }
 @media(max-width:380px){.nav .brand{font-size:15px;gap:4px}.user-bar{gap:8px}.bal-pill{padding:6px 10px}.nav .btn.small{padding:8px 10px}}
+/* Utilities belong after the content on phones, never over task actions. */
+@media(max-width:700px){
+#privacy-choices,#snd-toggle{position:static;transform:none;margin:14px 18px;vertical-align:middle}
+#privacy-choices{display:inline-flex}
+#snd-toggle{display:inline-block}
+footer{padding-bottom:24px}
+}
