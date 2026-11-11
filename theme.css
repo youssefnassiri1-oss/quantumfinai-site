@@ -124,3 +124,5 @@ footer{padding-bottom:130px}
 #snd-toggle{display:inline-block}
 footer{padding-bottom:24px}
 }
+#toast:not(.on){visibility:hidden;pointer-events:none}
+#toast.on{visibility:visible}
