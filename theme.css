@@ -55,3 +55,23 @@ input:focus{outline:0;border-color:var(--c);box-shadow:0 0 0 3px rgba(25,230,208
 @media(prefers-reduced-motion:reduce){.qaurora i,.qtrack,.grad{animation:none!important}}
 @media(max-width:480px){.brand{font-size:16px;white-space:nowrap}.logo{width:28px;height:28px}.nav{padding:12px 4vw}.nav .btn.small{white-space:nowrap;padding:7px 12px;font-size:13px}}
 .grid.steps{max-width:1000px;margin:0 auto}
+/* lighter mode: no blur/backdrop filters, no continuous animation */
+.nav,.card,.mcard,.dstat,.wall-card,.formbox,.faq details,.lrow,.modal{-webkit-backdrop-filter:none!important;backdrop-filter:none!important}
+.card,.mcard,.dstat,.wall-card,.formbox,.faq details,.lrow,.modal{background:rgba(18,25,50,.92)}
+.nav{background:rgba(6,9,20,.94)}
+.qaurora i{filter:none!important;animation:none!important;will-change:auto}
+.qaurora i:nth-child(1){background:radial-gradient(circle,rgba(91,124,255,.35),transparent 65%)}
+.qaurora i:nth-child(2){background:radial-gradient(circle,rgba(192,77,255,.25),transparent 65%)}
+.qaurora i:nth-child(3){background:radial-gradient(circle,rgba(25,230,208,.18),transparent 65%)}
+.grad{animation:none!important;background-size:100% 100%}
+.btn::after{display:none}
+.qchip{box-shadow:none}
+.wall-logo{box-shadow:none}
+@media(max-width:700px){
+.qaurora::after{display:none}
+.qmar{overflow-x:auto;-webkit-mask-image:none;mask-image:none;scrollbar-width:none}
+.qmar::-webkit-scrollbar{display:none}
+.qtrack{animation:none!important;width:max-content;padding:0 4vw}
+.qtrack .qchip:nth-child(n+12){display:none}
+.card:hover,.mcard:hover,.wall-card:hover{box-shadow:none}
+}
