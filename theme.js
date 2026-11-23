@@ -12,7 +12,7 @@ function pay(){
     var ic=IMG[b[0]]?'<img src="'+IMG[b[0]]+'" alt="'+b[0]+' logo" width="30" height="30" style="border-radius:8px">'
       :'<svg viewBox="0 0 24 24" width="26" height="26" fill="'+b[4]+'"><path d="'+b[3]+'"/></svg>';
     var bg=IMG[b[0]]?'#0b1020':b[2];
-    return '<button type="button" class="mcard soon qpay" data-toast="Withdrawals are reviewed before approval and unlocking soon." style="--bc:'+b[2]+'"><span class="mlogo" style="background:'+bg+';border-color:'+b[2]+'">'+ic+'</span><div class="mtxt"><b>'+b[0]+'</b><small>'+b[1]+'</small></div><span class="tag">Soon</span></button>';
+    return '<button type="button" class="mcard qpay" data-payout="'+["binance","cwallet","paypal","bitcoin","usdt","litecoin","googleplay","itunes","amazon"][B.indexOf(b)]+'" style="--bc:'+b[2]+'"><span class="mlogo" style="background:'+bg+';border-color:'+b[2]+'">'+ic+'</span><div class="mtxt"><b>'+b[0]+'</b><small>'+b[1]+'</small></div><span class="tag">Available</span></button>';
   }).join('');
 }
 var LIVE=["CPX Research","Wannads","PubScale","MobiVortex","Offery","GemiAd","PixyLabs","Mooffers","TheoremReach","Tapjoy","Sharklio"];
