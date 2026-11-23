@@ -612,3 +612,9 @@
   .ticker-track { animation: none !important; }
   .ticker-viewport { overflow-x: auto; -webkit-mask-image: none; mask-image: none; }
 }
+
+/* achievement cards (added: source had no item styles) */
+.ach { display: flex; flex-direction: column; gap: 4px; padding: 12px; border: 1px solid var(--line2, #27372d); border-radius: 14px; background: var(--card2, #0c1710); opacity: .62; }
+.ach.on { opacity: 1; border-color: rgba(34, 197, 94, .5); }
+.ach i { font-style: normal; font-size: 22px; }
+.ach small, .ach span { color: var(--mut, #93a89a); font-size: 12px; }
