@@ -394,6 +394,7 @@ async function loadDash() {
       : empty('No withdrawal requests yet.');
 
     if (ADMIN) loadAdmin();
+    if (window.QFEnhancements) window.QFEnhancements.onDashboardLoaded();
   } catch (e) {
     toast(e.message);
   }
@@ -1306,3 +1307,4 @@ function withdrawalRecipient(w){try{const d=JSON.parse(w.destination);return {re
 function renderWithdrawalTable(rows){const heads=['Reference','Requested','Member ID','Method','Points','USD','Recipient','Region','Status','Note'];document.getElementById('wdtable').innerHTML='<table style="width:100%;border-collapse:collapse;text-align:left"><thead><tr>'+heads.map(h=>'<th style="padding:10px">'+h+'</th>').join('')+'</tr></thead><tbody>'+rows.map(w=>{const d=withdrawalRecipient(w);return '<tr>'+[w.id,when(w.created_at),w.user_id,w.method_code,w.points,(w.points/1000).toFixed(2),d.recipient,d.region,w.status,w.admin_note||''].map(c=>'<td style="padding:10px;border-top:1px solid #284438">'+esc(c)+'</td>').join('')+'</tr>';}).join('')+'</tbody></table><p class="note">Latest '+rows.length+' requests. CSV includes all statuses in this view. Refresh before paying.</p>';}
 document.getElementById('wdrefresh').onclick=()=>loadAdmin();
 document.getElementById('wdexport').onclick=()=>{if(!ADMIN)return;const cell=v=>'"'+String(v??'').replace(/^[=+@\-\t\r]/,"'$&").replace(/"/g,'""')+'"';const rows=[['Reference','Requested UTC','Member ID','Method','Points','USD','Recipient','Region','Status','Note'],...WD_ROWS.map(w=>{const d=withdrawalRecipient(w);return [w.id,w.created_at,w.user_id,w.method_code,w.points,(w.points/1000).toFixed(2),d.recipient,d.region,w.status,w.admin_note||''];})];const url=URL.createObjectURL(new Blob(['\ufeff'+rows.map(r=>r.map(cell).join(',')).join('\r\n')],{type:'text/csv;charset=utf-8'}));const a=document.createElement('a');a.href=url;a.download='QuantumFinAI-withdrawals-'+new Date().toISOString().slice(0,10)+'.csv';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);};
+window.QF = { rpc, api, toast, sfx, loadDash, loadAdmin, sendVerify, isSignedIn: () => !!S, isAdmin: () => !!ADMIN };
