@@ -509,10 +509,6 @@
     if (!dash || !dtabs || document.getElementById('dash-welcome-strip')) return;
 
     // 1. Add Currency Toggle to Navbar
-    const userNav = document.getElementById('user-nav');
-    if (userNav && !userNav.querySelector('.cur-switch')) {
-      userNav.insertBefore(makeCurrencySwitcher(), userNav.firstChild);
-    }
 
     // 2. Personalized Welcome & Level Strip + Quick Actions
     const strip = document.createElement('div');
@@ -531,6 +527,7 @@
         <button type="button" class="btn small" id="dw-welcome-btn" hidden>🎁 Open Welcome Reward</button>
       </div>
     `;
+    strip.querySelector('#dw-right').appendChild(makeCurrencySwitcher());
     const dstats = dash.querySelector('.dstats');
     dash.insertBefore(strip, dstats);
 
