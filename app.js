@@ -1245,6 +1245,18 @@ function privacyPanel() {
   dlg.returnValue='';dlg.showModal();
 }
 async function permitPartner(name) {
+  // Fresh server-owned account state before every partner launch. No new tracking.
+  try {
+    const profile = await rpc('my_profile_summary');
+    if (!profile || !['normal','review'].includes(profile.status || 'normal')) {
+      toast('This action is unavailable. Contact support for account review.');
+      return false;
+    }
+  } catch (_) {
+    toast('Unable to verify account access. Please try again.');
+    return false;
+  }
+
   // Consent is captured at sign-up (terms + privacy acknowledgement). Opening an offer is never blocked;
   // the launch is recorded best-effort so it can be withdrawn later in Privacy choices.
   try {
