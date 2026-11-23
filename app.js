@@ -321,7 +321,7 @@ async function loadPublic() {
     drawWallPartners(window.NETS);
     const wdm = document.getElementById('wdm');
     if (wdm) {
-      wdm.innerHTML = m.map(x => `<option value="${esc(x.code)}">${esc(x.label)} (min ${Number(x.min_points).toLocaleString()} pts)</option>`).join('');
+      wdm.innerHTML = m.map(x => `<option value="${esc(x.code)}" data-min-points="${Number(x.min_points)}">${esc(x.label)} (min ${Number(x.min_points).toLocaleString()} pts / $${(Number(x.min_points)/1000).toFixed(2)})</option>`).join('');
       updateWithdrawalFields();
     }
   } catch (_) {}
@@ -1277,11 +1277,13 @@ if(privacyGpc()) { localStorage.removeItem('qf_d');persistPrivacy({version:'2026
 // Manual payout requests. The database remains the source of truth for funds.
 function updateWithdrawalFields() {
  const m=document.getElementById('wdm').value, gift=['googleplay','itunes','amazon'].includes(m);
+ const minimum=gift?5000:Number(document.getElementById('wdm').selectedOptions[0]?.dataset.minPoints||1000);
+ document.getElementById('wdpoints').min=minimum;
  const mail=gift||m==='paypal', dest=document.getElementById('wddest');
  document.getElementById('wddest-label').textContent=mail?'Recipient email':m==='binance'?'Binance Pay ID':m==='cwallet'?'Cwallet ID':m==='usdt'?'USDT address (TRC-20 only)':m==='bitcoin'?'Bitcoin address (BTC network)':'Litecoin address (LTC network)';
  dest.type=mail?'email':'text'; dest.placeholder=mail?'you@example.com':m==='binance'||m==='cwallet'?'Your account ID':'Your receiving address';
  document.getElementById('wdregion-wrap').hidden=!gift; document.getElementById('wdregion').required=gift;
- document.getElementById('wdhint').textContent=gift?'Gift cards must match your store country. Minimum points do not guarantee a particular card denomination. We will review the amount and region before issuing.':'Check your recipient details carefully. Crypto must use the exact network shown. Requests are subject to review.';
+ document.getElementById('wdhint').textContent=gift?'Gift card minimum: 5,000 points ($5 USD). Cards must match your store country. We will review the amount and region before issuing.':'Check your recipient details carefully. Crypto must use the exact network shown. Requests are subject to review.';
  document.getElementById('wdlogo').textContent=gift?'🎁':m==='paypal'?'P':'◈';
 }
 document.getElementById('wdm').addEventListener('change',updateWithdrawalFields);
@@ -1291,6 +1293,7 @@ document.getElementById('wdform').onsubmit=async e=>{
  e.preventDefault();const b=document.getElementById('wdsubmit'),msg=document.getElementById('wdmessage');b.disabled=true;msg.textContent='Checking balance and saving request...';
  try{const m=document.getElementById('wdm').value,p=Number(document.getElementById('wdpoints').value),r=document.getElementById('wddest').value.trim(),region=document.getElementById('wdregion').value.trim();
  if(!Number.isSafeInteger(p)||p<=0)throw new Error('Enter a positive whole number of points.');
+ if(['googleplay','itunes','amazon'].includes(m)&&p<5000)throw new Error('Gift card minimum is 5,000 points ($5 USD).');
  const bal=Number(await rpc('my_balance'));if(p>bal)throw new Error('Amount exceeds your available balance.');
  const destination=JSON.stringify({recipient:r,...(['googleplay','itunes','amazon'].includes(m)?{region}: {})});
  if(destination.length>200)throw new Error('Recipient details are too long.');
