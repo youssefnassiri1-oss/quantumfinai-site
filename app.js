@@ -1132,13 +1132,13 @@ function animateValue(el, endVal, duration = 800) {
       if (p.x < 0 || p.x > w) p.vx *= -1;
       if (p.y < 0 || p.y > h) p.vy *= -1;
       ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, 6.2832);
-      ctx.fillStyle = p.g ? '#f0b90b' : '#22d3ee'; ctx.fill();
+      ctx.fillStyle = p.g ? '#f0b90b' : '#4ade80'; ctx.fill();
       for (let j = i + 1; j < parts.length; j++) {
         const q = parts[j], d = Math.hypot(p.x - q.x, p.y - q.y);
-        if (d < 130) { ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(q.x, q.y); ctx.strokeStyle = `rgba(79,140,255,${(1 - d / 130) * .28})`; ctx.lineWidth = 1; ctx.stroke(); }
+        if (d < 130) { ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(q.x, q.y); ctx.strokeStyle = `rgba(74,222,128,${(1 - d / 130) * .28})`; ctx.lineWidth = 1; ctx.stroke(); }
       }
       const md = Math.hypot(p.x - m.x, p.y - m.y);
-      if (md < 160) { ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(m.x, m.y); ctx.strokeStyle = `rgba(34,211,238,${(1 - md / 160) * .5})`; ctx.stroke(); }
+      if (md < 160) { ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(m.x, m.y); ctx.strokeStyle = `rgba(163,230,53,${(1 - md / 160) * .5})`; ctx.stroke(); }
     }
     raf = requestAnimationFrame(step);
   }
