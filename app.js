@@ -53,6 +53,7 @@ const tsWait = setInterval(() => {
 
 let S = JSON.parse(localStorage.getItem('qf_s') || 'null');
 let ADMIN = false;
+let WD_BALANCE = 0, WD_ROWS = [];
 
 function setSess(d) {
   S = {
@@ -218,10 +219,10 @@ function drawBrands() {
   const el = document.getElementById('wd');
   if (!el) return;
   el.innerHTML = BRAND_LIST.map(b => `
-    <button type="button" class="mcard soon" data-toast="Payouts are unlocking soon.">
+    <button type="button" class="mcard" data-payout="${b[0]}">
       <span class="mlogo">💳</span>
       <div class="mtxt"><b>${b[1]}</b><small>${b[2]}</small></div>
-      <span class="tag">Soon</span>
+      <span class="tag">Available</span>
     </button>`).join('');
 }
 
@@ -321,7 +322,7 @@ async function loadPublic() {
     const wdm = document.getElementById('wdm');
     if (wdm) {
       wdm.innerHTML = m.map(x => `<option value="${esc(x.code)}">${esc(x.label)} (min ${Number(x.min_points).toLocaleString()} pts)</option>`).join('');
-      document.getElementById('wdlogo').textContent = LOGOS[wdm.value] || '◇';
+      updateWithdrawalFields();
     }
   } catch (_) {}
 }
@@ -337,6 +338,8 @@ async function loadDash() {
     ]);
 
     const bal = prof ? prof.balance : await rpc('my_balance');
+    WD_BALANCE = Math.max(0, Number(bal));
+    document.getElementById('wdpoints').max = WD_BALANCE;
     const totalEarned = prof ? prof.total_earned : led.filter(x => x.delta > 0).reduce((s, x) => s + x.delta, 0);
 
     animateValue(document.getElementById('sbal'), Number(bal));
@@ -904,7 +907,7 @@ async function loadAdmin() {
   try {
     const [cl, wd, of, fl, ur, pb] = await Promise.all([
       api('offer_claims?select=*,offers(title)&status=in.(pending,completed,approved)&order=created_at.desc&limit=100'),
-      api('withdrawal_requests?select=*&status=in.(requested,under_review,approved)&order=created_at'),
+      api('withdrawal_requests?select=*&order=created_at.desc&limit=1000'),
       api('offers?select=id,title,points,status,min_seconds,max_claims,partners(name)&order=created_at.desc'),
       api('fraud_flags?select=*&resolved=eq.false&order=created_at.desc&limit=100'),
       api('user_risk?select=*&status=in.(review,blocked)&order=updated_at.desc'),
@@ -921,8 +924,10 @@ async function loadAdmin() {
       `<button class="btn small ghost" data-rc="${c.id}|rejected">Reject</button>`
     )).join('') : empty('Nothing to review.');
 
+    WD_ROWS = wd; renderWithdrawalTable(wd);
     const nxt = { requested: ['under_review', 'Start review'], under_review: ['approved', 'Approve'], approved: ['paid', 'Mark paid'] };
-    document.getElementById('awd').innerHTML = wd.length ? wd.map(w => row(
+    const openWd = wd.filter(w => ['requested','under_review','approved'].includes(w.status));
+    document.getElementById('awd').innerHTML = openWd.length ? openWd.map(w => row(
       w.points + ' pts, ' + esc(w.method_code) + '<br><small>' + esc(w.destination) + '</small>',
       badge(w.status),
       `<button class="btn small" data-rw="${w.id}|${nxt[w.status][0]}">${nxt[w.status][1]}</button> <button class="btn small ghost" data-rw="${w.id}|rejected">Reject</button>`
@@ -1256,3 +1261,33 @@ if(document.getElementById('privacy-correct')) document.getElementById('privacy-
 if(document.getElementById('privacy-delete')) document.getElementById('privacy-delete').onclick=async()=>{if((await askNote('Permanently delete your account and personal data? Download your data first. Reward accounting rows are de-linked, not removed. Pending withdrawals need support. Type DELETE to confirm:'))!=='DELETE')return;try{await rpc('my_privacy_delete',{p_confirm:'DELETE'});localStorage.removeItem('qf_d');localStorage.removeItem('qf_privacy');signOut();toast('Account deleted');}catch(e){toast(e.message||'Deletion failed. Contact support.');}};
 if(privacyGpc()) { localStorage.removeItem('qf_d');persistPrivacy({version:'2026-10-18',fingerprinting:false,partners:{},gpc:true}).catch(()=>{}); }
 // Privacy choices stay available via the footer button; no blocking dialog on first visit.
+
+// Manual payout requests. The database remains the source of truth for funds.
+function updateWithdrawalFields() {
+ const m=document.getElementById('wdm').value, gift=['googleplay','itunes','amazon'].includes(m);
+ const mail=gift||m==='paypal', dest=document.getElementById('wddest');
+ document.getElementById('wddest-label').textContent=mail?'Recipient email':m==='binance'?'Binance Pay ID':m==='cwallet'?'Cwallet ID':m==='usdt'?'USDT address (TRC-20 only)':m==='bitcoin'?'Bitcoin address (BTC network)':'Litecoin address (LTC network)';
+ dest.type=mail?'email':'text'; dest.placeholder=mail?'you@example.com':m==='binance'||m==='cwallet'?'Your account ID':'Your receiving address';
+ document.getElementById('wdregion-wrap').hidden=!gift; document.getElementById('wdregion').required=gift;
+ document.getElementById('wdhint').textContent=gift?'Gift cards must match your store country. Minimum points do not guarantee a particular card denomination. We will review the amount and region before issuing.':'Check your recipient details carefully. Crypto must use the exact network shown. Requests are subject to review.';
+ document.getElementById('wdlogo').textContent=gift?'🎁':m==='paypal'?'P':'◈';
+}
+document.getElementById('wdm').addEventListener('change',updateWithdrawalFields);
+document.getElementById('wdmax').onclick=async()=>{try{WD_BALANCE=Math.max(0,Number(await rpc('my_balance')));const p=document.getElementById('wdpoints');p.value=WD_BALANCE;p.max=WD_BALANCE;p.dispatchEvent(new Event('input'));}catch(e){toast(e.message)}};
+document.getElementById('wdpoints').oninput=e=>{document.getElementById('wdvalue').textContent='$'+(Number(e.target.value||0)/1000).toFixed(2)+' USD';};
+document.getElementById('wdform').onsubmit=async e=>{
+ e.preventDefault();const b=document.getElementById('wdsubmit'),msg=document.getElementById('wdmessage');b.disabled=true;msg.textContent='Checking balance and saving request...';
+ try{const m=document.getElementById('wdm').value,p=Number(document.getElementById('wdpoints').value),r=document.getElementById('wddest').value.trim(),region=document.getElementById('wdregion').value.trim();
+ if(!Number.isSafeInteger(p)||p<=0)throw new Error('Enter a positive whole number of points.');
+ const bal=Number(await rpc('my_balance'));if(p>bal)throw new Error('Amount exceeds your available balance.');
+ const destination=JSON.stringify({recipient:r,...(['googleplay','itunes','amazon'].includes(m)?{region}: {})});
+ if(destination.length>200)throw new Error('Recipient details are too long.');
+ const id=await rpc('request_withdrawal',{p_method:m,p_points:p,p_destination:destination});if(!id)throw new Error('Request needs account review. Contact support.');
+ msg.textContent='Request saved. Reference: '+id+'. Your points are held pending manual review.';document.getElementById('wdpoints').value='';await loadDash();
+ }catch(err){msg.textContent=err.message||'Request failed. Refresh your history before trying again.';}finally{b.disabled=false;}
+};
+document.addEventListener('click',e=>{const card=e.target.closest('[data-payout]');if(!card)return;const method=card.dataset.payout;if(!S){document.getElementById('account').scrollIntoView({behavior:'smooth'});toast('Sign in to request a withdrawal.');return;}document.querySelector('[data-t="d-wd"]').click();document.getElementById('wdm').value=method;updateWithdrawalFields();document.getElementById('d-wd').scrollIntoView({behavior:'smooth'});});
+function withdrawalRecipient(w){try{const d=JSON.parse(w.destination);return {recipient:d.recipient||'',region:d.region||''};}catch(_){return {recipient:w.destination||'',region:''};}}
+function renderWithdrawalTable(rows){const heads=['Reference','Requested','Member ID','Method','Points','USD','Recipient','Region','Status','Note'];document.getElementById('wdtable').innerHTML='<table style="width:100%;border-collapse:collapse;text-align:left"><thead><tr>'+heads.map(h=>'<th style="padding:10px">'+h+'</th>').join('')+'</tr></thead><tbody>'+rows.map(w=>{const d=withdrawalRecipient(w);return '<tr>'+[w.id,when(w.created_at),w.user_id,w.method_code,w.points,(w.points/1000).toFixed(2),d.recipient,d.region,w.status,w.admin_note||''].map(c=>'<td style="padding:10px;border-top:1px solid #284438">'+esc(c)+'</td>').join('')+'</tr>';}).join('')+'</tbody></table><p class="note">Latest '+rows.length+' requests. CSV includes all statuses in this view. Refresh before paying.</p>';}
+document.getElementById('wdrefresh').onclick=()=>loadAdmin();
+document.getElementById('wdexport').onclick=()=>{if(!ADMIN)return;const cell=v=>'"'+String(v??'').replace(/^[=+@\-\t\r]/,"'$&").replace(/"/g,'""')+'"';const rows=[['Reference','Requested UTC','Member ID','Method','Points','USD','Recipient','Region','Status','Note'],...WD_ROWS.map(w=>{const d=withdrawalRecipient(w);return [w.id,w.created_at,w.user_id,w.method_code,w.points,(w.points/1000).toFixed(2),d.recipient,d.region,w.status,w.admin_note||''];})];const url=URL.createObjectURL(new Blob(['\ufeff'+rows.map(r=>r.map(cell).join(',')).join('\r\n')],{type:'text/csv;charset=utf-8'}));const a=document.createElement('a');a.href=url;a.download='QuantumFinAI-withdrawals-'+new Date().toISOString().slice(0,10)+'.csv';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);};
