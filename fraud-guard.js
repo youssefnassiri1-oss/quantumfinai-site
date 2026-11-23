@@ -140,7 +140,6 @@
     var nav = navigator;
     var flags = [];
     if (nav.webdriver === true) flags.push('webdriver_true');
-    if (!nav.plugins || nav.plugins.length === 0) flags.push('no_plugins');
     if (!nav.languages || nav.languages.length === 0) flags.push('no_languages');
     // headless Chrome tells: tiny plugin list + webdriver + missing chrome object nuances
     var isHeadlessUA = /headless/i.test(nav.userAgent || '');
