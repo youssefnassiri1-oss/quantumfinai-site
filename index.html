@@ -92,6 +92,7 @@
           <label id="lname">Full name<input name="name" autocomplete="name" placeholder="Your name"></label>
           <label>Email<input name="email" type="email" required autocomplete="email" placeholder="you@example.com"></label>
           <label>Password<input name="pw" type="password" minlength="8" required autocomplete="new-password" placeholder="Min. 8 characters"></label>
+          <div aria-hidden="true" style="position:absolute;left:-9999px;top:-9999px;height:1px;width:1px;overflow:hidden"><label>Website<input name="website" type="text" tabindex="-1" autocomplete="off"></label></div>
           <label id="consent-row" style="display:flex;flex-direction:row;align-items:flex-start;gap:10px;line-height:1.5"><input id="legal-consent" name="consent" type="checkbox" required style="width:18px;height:18px;flex-shrink:0;margin-top:3px"><span>I agree to the <a href="/terms" target="_blank" rel="noopener" style="color:#4ade80;text-decoration:underline">Terms of Service</a> and acknowledge the <a href="/privacy" target="_blank" rel="noopener" style="color:#4ade80;text-decoration:underline">Privacy Policy</a>.</span></label>
           <label id="device-row" style="display:flex;flex-direction:row;align-items:flex-start;gap:10px;line-height:1.5"><input id="device-consent" name="device_consent" type="checkbox" style="width:18px;height:18px;flex-shrink:0;margin-top:3px"><span>I allow a one-time device check at sign-up (a random device ID and basic browser, screen and network signals) so each person can only have one account. It is required to create an account. <a href="/privacy" target="_blank" rel="noopener" style="color:#4ade80;text-decoration:underline">Details</a></span></label>
           <div id="tsauth" class="ts"></div>
@@ -300,7 +301,7 @@
 <button id="privacy-choices" class="privacy-fixed btn ghost" type="button">Privacy choices</button>
 <script src="fraud-guard.js?v=20261018a"></script>
 <script src="proxy-shield.js?v=20261018a"></script>
-<script src="app.js?v=20261124e1"></script>
+<script src="app.js?v=20261126a"></script>
 <script src="enhancements.js?v=20261124e2"></script>
 <script src="notify.js?v=20261016n2" defer></script>
 </body>
