@@ -164,7 +164,7 @@ authForm.addEventListener('submit', async e => {
         sr = await fetch(SB_URL + '/functions/v1/signup', {
           method: 'POST',
           headers: { apikey: SB_KEY, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: authForm.email.value, password: authForm.pw.value, name: authForm.name.value.trim(), token: cap, consent: true, policy_version: "2026-10-18", device_check: true, device_hash: dev.device_hash, fingerprint_hash: dev.fingerprint_hash, fp: dev.fp, proxy: dev.proxy || null }),
+          body: JSON.stringify({ email: authForm.email.value, password: authForm.pw.value, name: authForm.name.value.trim(), token: cap, website: (authForm.website ? authForm.website.value : ''), consent: true, policy_version: "2026-10-18", device_check: true, device_hash: dev.device_hash, fingerprint_hash: dev.fingerprint_hash, fp: dev.fp, proxy: dev.proxy || null }),
           signal: abort.signal
         });
       } finally { clearTimeout(slowTimer); }
