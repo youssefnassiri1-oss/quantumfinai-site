@@ -93,6 +93,8 @@ Deno.serve(async (req) => {
   const em0 = String(b.email || "").trim().toLowerCase().slice(0, 200);
   const refuse = (r: Request, reason: string, status: number, body: unknown, detail = "", dh = "") =>
     refuseBase(r, em0, reason, status, body, [detail, `tz=${String(b?.fp?.tz || "?").slice(0, 40)}`].filter(Boolean).join(" "), dh);
+  // Honeypot: a hidden "website" field that only bots fill. Refuse before any other work (saves Turnstile and IP checks).
+  if (String(b.website || "").trim()) return await refuse(req, "honeypot", 400, { error: "Could not create the account. Please try again." }, "honeypot field filled");
   const KNOWN_POLICY_VERSIONS = ["2026-10-15", "2026-10-18"];
   if (b.consent !== true || !KNOWN_POLICY_VERSIONS.includes(String(b.policy_version || ""))) return await refuse(req, "terms_not_accepted", 400, { error: "Please agree to the current Terms of Service and acknowledge the Privacy Policy" }, b.consent === true ? "policy_version" : "no_consent");
   const email = String(b.email || "").trim().toLowerCase(), pw = String(b.password || ""), name = String(b.name || "").trim().slice(0, 100), tk = String(b.token || "");
@@ -118,6 +120,14 @@ Deno.serve(async (req) => {
   const fp = { screen: String(fpIn.screen ?? "").slice(0, 20), tz: String(fpIn.tz ?? "").slice(0, 60), cores: Number.isFinite(fpIn.cores) ? Number(fpIn.cores) : null, mem: Number.isFinite(fpIn.mem) ? Number(fpIn.mem) : null, gpu: String(fpIn.gpu ?? "").slice(0, 120), platform: String(fpIn.platform ?? "").slice(0, 40) };
   const hw = await hwHash(fp);
   const iph = ip ? await sha(ip + "qf-salt") : null;
+  // Per-network throttle: at most 5 new accounts per IP per 24 hours. Bots rotate emails and devices
+  // far more easily than networks. Fail-open like the other lookups: a database hiccup never blocks real members.
+  try {
+    if (iph) {
+      const rows = await rest(`signup_devices?select=user_id&ip_hash=eq.${iph}&created_at=gte.${new Date(Date.now() - 864e5).toISOString()}&limit=6`);
+      if (Array.isArray(rows) && rows.length >= 5) return await refuse(req, "ip_rate_limit", 429, { error: "Too many accounts created from this network today. Please try again tomorrow." }, "ip daily cap", dh);
+    }
+  } catch (_) {}
   const dupRule = await deviceDuplicate(dh, fh, hw, iph);
   if (dupRule) return await refuse(req, "device_duplicate", 403, { error: DUP_MSG, code: "device_duplicate" }, "duplicate rule: " + dupRule, dh);
   const sec = Deno.env.get("TURNSTILE_SECRET");
